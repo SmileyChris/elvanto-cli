@@ -1,14 +1,12 @@
 use crate::domain::arrangement::Arrangement;
 use crate::error::CliError;
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Selection<'a> {
     pub chosen: &'a Arrangement,
     pub others: Vec<&'a Arrangement>,
 }
 
-#[allow(dead_code)]
 pub fn select<'a>(
     arrangements: &'a [Arrangement],
     requested: Option<&str>,

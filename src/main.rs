@@ -48,6 +48,7 @@ async fn run(cli: Cli) -> Result<(), CliError> {
             cli::SongsCommand::Categories(args) => commands::songs_categories::run(&client, args).await,
             cli::SongsCommand::List(args) => commands::songs_list::run(&client, args).await,
             cli::SongsCommand::Show(args) => commands::songs_show::run(&client, args).await,
+            cli::SongsCommand::Lyrics(args) => commands::songs_lyrics::run(&client, args).await,
             _ => Err(CliError::Usage("not implemented yet".into())),
         },
     }
