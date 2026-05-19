@@ -8,6 +8,9 @@ pub enum CliError {
     #[error("network: {0}")]
     Network(String),
 
+    #[error("io: {0}")]
+    Io(String),
+
     #[error("{0}")]
     Usage(String),
 }
@@ -15,7 +18,7 @@ pub enum CliError {
 impl CliError {
     pub fn exit_code(&self) -> u8 {
         match self {
-            CliError::Api { .. } | CliError::Network(_) => 1,
+            CliError::Api { .. } | CliError::Network(_) | CliError::Io(_) => 1,
             CliError::Usage(_) => 2,
         }
     }
@@ -43,5 +46,12 @@ mod tests {
     fn usage_error_exits_2() {
         let err = CliError::Usage("ELVANTO_API_KEY is not set".into());
         assert_eq!(err.exit_code(), 2u8);
+    }
+
+    #[test]
+    fn io_error_exits_1() {
+        let err = CliError::Io("broken pipe".into());
+        assert_eq!(err.exit_code(), 1u8);
+        assert_eq!(err.to_string(), "io: broken pipe");
     }
 }

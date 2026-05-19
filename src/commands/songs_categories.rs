@@ -15,5 +15,5 @@ pub async fn run(client: &Client, args: JsonOnly) -> Result<(), CliError> {
     } else {
         output::text::write_categories(&mut lock, &cats)
     };
-    res.map_err(|e| CliError::Network(format!("write error: {e}")))
+    res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }
