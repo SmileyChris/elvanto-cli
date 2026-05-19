@@ -1,4 +1,6 @@
 mod error;
+#[allow(dead_code)]
+mod api;
 
 use error::CliError;
 use std::process::ExitCode;
