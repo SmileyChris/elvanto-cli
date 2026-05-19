@@ -141,6 +141,23 @@ stable unless a breaking release is explicitly documented.
 
 - [Songs system design](docs/songs.md)
 
+## Building & running
+
+The crate ships as a binary called `elvanto`.
+
+````sh
+cargo build --release
+export ELVANTO_API_KEY="your-key"
+./target/release/elvanto auth check
+./target/release/elvanto songs list --album --ccli
+````
+
+For local development against a stub server:
+
+````sh
+ELVANTO_BASE_URL=http://localhost:8080 cargo run -- songs list
+````
+
 ## References
 
 API facts in these initial docs were checked against Elvanto's official

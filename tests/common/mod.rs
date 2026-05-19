@@ -4,6 +4,7 @@ pub fn bin() -> Command {
     Command::cargo_bin("elvanto").unwrap()
 }
 
+#[allow(dead_code)]
 pub async fn mock_server() -> wiremock::MockServer {
     wiremock::MockServer::start().await
 }

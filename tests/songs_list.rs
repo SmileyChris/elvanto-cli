@@ -1,11 +1,15 @@
 mod common;
 use common::{bin, mock_server};
-use predicates::prelude::*;
 use predicates::str::contains;
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
-fn page(page: u32, on_this_page: u32, total: u32, songs: Vec<serde_json::Value>) -> serde_json::Value {
+fn page(
+    page: u32,
+    on_this_page: u32,
+    total: u32,
+    songs: Vec<serde_json::Value>,
+) -> serde_json::Value {
     serde_json::json!({
         "status": "ok",
         "songs": {
@@ -18,7 +22,14 @@ fn page(page: u32, on_this_page: u32, total: u32, songs: Vec<serde_json::Value>)
     })
 }
 
-fn song(id: &str, title: &str, artist: &str, status: &str, album: &str, number: &str) -> serde_json::Value {
+fn song(
+    id: &str,
+    title: &str,
+    artist: &str,
+    status: &str,
+    album: &str,
+    number: &str,
+) -> serde_json::Value {
     serde_json::json!({
         "id": id, "title": title, "artist": artist,
         "album": album, "number": number, "status": status,
@@ -31,34 +42,49 @@ async fn paginates_and_filters_active_in_text_mode() {
     Mock::given(method("POST"))
         .and(path("/songs/getAll.json"))
         .and(body_partial_json(serde_json::json!({ "page": 1 })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(page(
-            1,
-            100,
-            150,
-            (0..100)
-                .map(|i| song(&format!("s{i}"), &format!("T{i}"), "A", "1", "Al", &format!("{i}")))
-                .collect(),
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(page(
+                1,
+                100,
+                150,
+                (0..100)
+                    .map(|i| {
+                        song(
+                            &format!("s{i}"),
+                            &format!("T{i}"),
+                            "A",
+                            "1",
+                            "Al",
+                            &format!("{i}"),
+                        )
+                    })
+                    .collect(),
+            )),
+        )
         .mount(&server)
         .await;
     Mock::given(method("POST"))
         .and(path("/songs/getAll.json"))
         .and(body_partial_json(serde_json::json!({ "page": 2 })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(page(
-            2,
-            50,
-            150,
-            (100..150)
-                .map(|i| song(
-                    &format!("s{i}"),
-                    &format!("T{i}"),
-                    "A",
-                    if i % 2 == 0 { "1" } else { "0" },
-                    "Al",
-                    &format!("{i}"),
-                ))
-                .collect(),
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(page(
+                2,
+                50,
+                150,
+                (100..150)
+                    .map(|i| {
+                        song(
+                            &format!("s{i}"),
+                            &format!("T{i}"),
+                            "A",
+                            if i % 2 == 0 { "1" } else { "0" },
+                            "Al",
+                            &format!("{i}"),
+                        )
+                    })
+                    .collect(),
+            )),
+        )
         .mount(&server)
         .await;
 

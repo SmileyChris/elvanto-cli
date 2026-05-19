@@ -40,12 +40,14 @@ pub struct SongsResponse {
 
 #[derive(Debug, Deserialize, Default)]
 pub struct SongList {
+    #[allow(dead_code)]
     #[serde(default)]
     pub page: u32,
     #[serde(default)]
     pub per_page: u32,
     #[serde(default)]
     pub total: u32,
+    #[allow(dead_code)]
     #[serde(default)]
     pub on_this_page: u32,
     #[serde(default)]
@@ -79,7 +81,11 @@ impl RawSong {
     }
 
     pub fn status_label(&self) -> &'static str {
-        if self.is_active() { "active" } else { "archived" }
+        if self.is_active() {
+            "active"
+        } else {
+            "archived"
+        }
     }
 }
 
@@ -124,6 +130,7 @@ pub struct RawKey {
     pub ending: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ArrangementsResponse {
     #[serde(default)]
