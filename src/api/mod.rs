@@ -1,4 +1,5 @@
 pub mod raw;
+mod endpoints;
 
 use crate::error::CliError;
 use reqwest::Client as Http;

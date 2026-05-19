@@ -1,6 +1,7 @@
 mod api;
 mod cli;
 mod commands;
+mod domain;
 mod error;
 
 use clap::Parser;
