@@ -70,9 +70,63 @@ async fn text_output_default_window() {
         .args(["services", "list"])
         .assert()
         .success()
+        .stdout(
+            contains("svc | 2026-04-12 | Sunday Morning | Sunday Service | Main | published").and(
+                contains("svc | 2026-04-19 | Sunday Morning | Sunday Service | Main | draft"),
+            ),
+        );
+}
+
+#[tokio::test]
+async fn full_id_flag_prints_full_uuid() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(ok_page(vec![svc(
+            "1eb01e76-7a5d-4d02-a207-d75055645f14",
+            "2026-04-12 09:30:00",
+            "Sunday",
+            "Published",
+            "Sunday Service",
+            "Main",
+        )])))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["services", "list", "--full-id"])
+        .assert()
+        .success()
         .stdout(contains(
-            "svc-1 | 2026-04-12 | Sunday Morning | Sunday Service | Main | published",
+            "1eb01e76-7a5d-4d02-a207-d75055645f14 | 2026-04-12",
         ));
+}
+
+#[tokio::test]
+async fn default_text_output_shortens_uuid() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(ok_page(vec![svc(
+            "1eb01e76-7a5d-4d02-a207-d75055645f14",
+            "2026-04-12 09:30:00",
+            "Sunday",
+            "Published",
+            "Sunday Service",
+            "Main",
+        )])))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["services", "list"])
+        .assert()
+        .success()
+        .stdout(contains("1eb01e76 | 2026-04-12").and(contains("Sunday")));
 }
 
 #[tokio::test]
@@ -108,7 +162,7 @@ async fn from_and_to_flags_drive_request_body() {
         ])
         .assert()
         .success()
-        .stdout(contains("svc-9 | 2026-02-14 | Valentine Vigil"));
+        .stdout(contains("svc | 2026-02-14 | Valentine Vigil"));
 }
 
 #[tokio::test]

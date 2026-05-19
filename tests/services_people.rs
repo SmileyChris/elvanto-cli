@@ -166,6 +166,63 @@ async fn empty_volunteers_string_does_not_crash_deserializer() {
 }
 
 #[tokio::test]
+async fn short_id_resolves_via_list_when_direct_lookup_fails() {
+    let server = mock_server().await;
+    // 1) Direct getInfo with the short id returns not-found.
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .and(body_partial_json(serde_json::json!({ "id": "1eb01e76" })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "service": []
+        })))
+        .mount(&server)
+        .await;
+    // 2) list_services returns a service whose short id matches.
+    Mock::given(method("POST"))
+        .and(path("/services/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "services": {
+                "page": 1, "per_page": 100, "total": 1, "on_this_page": 1,
+                "service": [{
+                    "id": "1eb01e76-7a5d-4d02-a207-d75055645f14",
+                    "date": "2026-05-23 22:00:00",
+                    "name": "Sunday",
+                    "status": "Published"
+                }]
+            }
+        })))
+        .mount(&server)
+        .await;
+    // 3) getInfo with the full id returns the volunteers payload.
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .and(body_partial_json(serde_json::json!({
+            "id": "1eb01e76-7a5d-4d02-a207-d75055645f14"
+        })))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(ok_body(vec![pos_filled(
+                "Sound",
+                "FOH",
+                "Engineer",
+                "Alice B",
+                "Confirmed",
+            )])),
+        )
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["services", "people", "1eb01e76"])
+        .assert()
+        .success()
+        .stdout(contains("FOH | Engineer | Alice B | confirmed"));
+}
+
+#[tokio::test]
 async fn service_not_found_exits_1() {
     let server = mock_server().await;
     Mock::given(method("POST"))
@@ -173,6 +230,18 @@ async fn service_not_found_exits_1() {
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "status": "ok",
             "service": []
+        })))
+        .mount(&server)
+        .await;
+    // Fallback list_services returns nothing → original NotFound propagates.
+    Mock::given(method("POST"))
+        .and(path("/services/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "services": {
+                "page": 1, "per_page": 100, "total": 0, "on_this_page": 0,
+                "service": []
+            }
         })))
         .mount(&server)
         .await;

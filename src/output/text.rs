@@ -122,13 +122,18 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
     Ok(())
 }
 
-pub fn write_services<W: Write>(w: &mut W, services: &[Service]) -> io::Result<()> {
+pub fn write_services<W: Write>(w: &mut W, services: &[Service], full_id: bool) -> io::Result<()> {
     for s in services {
+        let id = if full_id {
+            s.id.as_str()
+        } else {
+            category::short_id(&s.id)
+        };
         let location = s.location.as_deref().unwrap_or("-");
         writeln!(
             w,
             "{} | {} | {} | {} | {} | {}",
-            s.id,
+            id,
             s.date_short(),
             s.name,
             s.service_type,

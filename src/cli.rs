@@ -148,6 +148,9 @@ pub struct ServicesListArgs {
     /// Inclusive end date (YYYY-MM-DD). Defaults to today (local time).
     #[arg(long, value_name = "YYYY-MM-DD")]
     pub to: Option<String>,
+    /// Print full UUIDs in text output (default uses short ids).
+    #[arg(long)]
+    pub full_id: bool,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
