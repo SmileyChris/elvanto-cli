@@ -7,7 +7,7 @@ mutations are deferred.
 
 ```
 elvanto songs categories           [--json] [--full-id]
-elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--full-id]
+elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--used-within DURATION] [--not-used-within DURATION] [--full-id]
 elvanto songs show <id>             [--json] [--full] [--files]
 elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement NAME]
 elvanto songs lyrics <id>           [--arrangement NAME]
@@ -52,6 +52,9 @@ blocks as short song ids. `--full-id` prints full song UUIDs in text output.
 assigned to that category id; it accepts either the full UUID or first-block
 short id. Repeat it to OR-match multiple categories. `--json` returns all
 matching songs (including non-active) as normalized JSON with full ids.
+`--used-within` keeps songs used in services within a recent duration, and
+`--not-used-within` excludes songs used in services within a recent duration.
+Durations use `d`, `w`, `m`, or `y` suffixes, e.g. `14d`, `2w`, `6m`, `1y`.
 Auto-fetches all pages.
 
 ```sh
@@ -59,6 +62,7 @@ elvanto songs list
 elvanto songs list --full-id
 elvanto songs list --album --ccli
 elvanto songs list --category-id abc --category-id def
+elvanto songs list --category-id abc --used-within 6m --not-used-within 2w
 elvanto songs list --json
 ```
 

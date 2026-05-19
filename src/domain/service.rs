@@ -58,7 +58,9 @@ impl From<RawService> for Service {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::raw::{RawServiceLocation, RawServiceType};
+    use crate::api::raw::{
+        RawServiceLocation, RawServicePlanList, RawServiceSongList, RawServiceType,
+    };
 
     fn raw() -> RawService {
         RawService {
@@ -75,6 +77,8 @@ mod tests {
                 id: "loc-1".into(),
                 name: "Main".into(),
             },
+            songs: RawServiceSongList::default(),
+            plans: RawServicePlanList::default(),
         }
     }
 

@@ -160,7 +160,7 @@ cargo build --release
 export ELVANTO_API_KEY="your-key"
 ./target/release/elvanto auth check
 ./target/release/elvanto songs categories
-./target/release/elvanto songs list --album --ccli --category-id "short-or-full-category-id"
+./target/release/elvanto songs list --album --ccli --category-id "short-or-full-category-id" --used-within 6m --not-used-within 2w
 ./target/release/elvanto services list
 ````
 

@@ -283,6 +283,27 @@ pub struct RawService {
     pub service_type: RawServiceType,
     #[serde(default)]
     pub location: RawServiceLocation,
+    #[serde(default)]
+    pub songs: RawServiceSongList,
+    #[serde(default)]
+    pub plans: RawServicePlanList,
+}
+
+impl RawService {
+    pub fn song_ids(&self) -> Vec<&str> {
+        let mut ids = Vec::new();
+        ids.extend(self.songs.song.iter().map(|song| song.id.as_str()));
+
+        for plan in &self.plans.plan {
+            for item in &plan.items.item {
+                if let Some(id) = item.song.get("id").and_then(|id| id.as_str()) {
+                    ids.push(id);
+                }
+            }
+        }
+
+        ids
+    }
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
@@ -301,6 +322,42 @@ pub struct RawServiceLocation {
     pub id: String,
     #[serde(default)]
     pub name: String,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceSongList {
+    #[serde(default)]
+    pub song: Vec<RawServiceSong>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceSong {
+    #[serde(default)]
+    pub id: String,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServicePlanList {
+    #[serde(default)]
+    pub plan: Vec<RawServicePlan>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServicePlan {
+    #[serde(default)]
+    pub items: RawServiceItemList,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceItemList {
+    #[serde(default)]
+    pub item: Vec<RawServiceItem>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceItem {
+    #[serde(default)]
+    pub song: serde_json::Value,
 }
 
 #[cfg(test)]
@@ -326,5 +383,32 @@ mod tests {
         assert_eq!(resp.songs.per_page, 100);
         assert_eq!(resp.songs.total, 132);
         assert_eq!(resp.songs.on_this_page, 100);
+    }
+
+    #[test]
+    fn service_song_ids_include_sidebar_and_plan_songs() {
+        let service: RawService = serde_json::from_value(json!({
+            "id": "svc-1",
+            "songs": {
+                "song": [
+                    { "id": "sidebar-song" }
+                ]
+            },
+            "plans": {
+                "plan": [
+                    {
+                        "items": {
+                            "item": [
+                                { "song": "" },
+                                { "song": { "id": "plan-song" } }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(service.song_ids(), vec!["sidebar-song", "plan-song"]);
     }
 }

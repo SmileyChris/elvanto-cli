@@ -77,6 +77,12 @@ pub struct SongsListArgs {
     /// Show full song UUIDs in text output.
     #[arg(long)]
     pub full_id: bool,
+    /// Keep songs used in a service within this duration (e.g. 6m, 2w).
+    #[arg(long, value_name = "DURATION")]
+    pub used_within: Option<String>,
+    /// Exclude songs used in a service within this duration (e.g. 2w, 14d).
+    #[arg(long = "not-used-within", value_name = "DURATION")]
+    pub not_used_within: Option<String>,
 }
 
 #[derive(Debug, Args)]

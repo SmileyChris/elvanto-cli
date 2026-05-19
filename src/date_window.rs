@@ -1,33 +1,17 @@
 use crate::error::CliError;
-use chrono::{Datelike, NaiveDate};
+use chrono::{Duration, Months, NaiveDate};
 
 /// Returns (date_from, date_to) where date_to = `now` and date_from = `now` minus 6 months.
 /// Day-of-month is clamped to the last valid day of the resulting month
 /// (so e.g. Aug 31 → Feb 28 in a non-leap year).
 pub fn default_window(now: NaiveDate) -> (NaiveDate, NaiveDate) {
-    let from = subtract_months(now, 6);
+    let from =
+        subtract_months(now, 6).expect("six month default window stays within chrono date range");
     (from, now)
 }
 
-fn subtract_months(date: NaiveDate, months: u32) -> NaiveDate {
-    let mut year = date.year();
-    let mut month = date.month() as i32 - months as i32;
-    while month < 1 {
-        month += 12;
-        year -= 1;
-    }
-    let month = month as u32;
-    let day = date.day().min(last_day_of_month(year, month));
-    NaiveDate::from_ymd_opt(year, month, day).expect("valid clamped date")
-}
-
-fn last_day_of_month(year: i32, month: u32) -> u32 {
-    for d in (28..=31).rev() {
-        if NaiveDate::from_ymd_opt(year, month, d).is_some() {
-            return d;
-        }
-    }
-    28
+fn subtract_months(date: NaiveDate, months: u32) -> Option<NaiveDate> {
+    date.checked_sub_months(Months::new(months))
 }
 
 pub fn parse_date(input: &str, flag_name: &str) -> Result<NaiveDate, CliError> {
@@ -36,6 +20,53 @@ pub fn parse_date(input: &str, flag_name: &str) -> Result<NaiveDate, CliError> {
             "invalid {flag_name} value {input:?}; expected YYYY-MM-DD"
         ))
     })
+}
+
+pub fn parse_duration_start(
+    input: &str,
+    today: NaiveDate,
+    flag_name: &str,
+) -> Result<NaiveDate, CliError> {
+    let trimmed = input.trim();
+    if trimmed.len() < 2 {
+        return Err(invalid_duration(flag_name, input));
+    }
+
+    let (amount, unit) = trimmed.split_at(trimmed.len() - 1);
+    let amount: u32 = amount
+        .parse()
+        .map_err(|_| invalid_duration(flag_name, input))?;
+    if amount == 0 {
+        return Err(invalid_duration(flag_name, input));
+    }
+
+    match unit {
+        "d" => today
+            .checked_sub_signed(Duration::days(amount as i64))
+            .ok_or_else(|| invalid_duration(flag_name, input)),
+        "w" => {
+            let days = amount
+                .checked_mul(7)
+                .ok_or_else(|| invalid_duration(flag_name, input))?;
+            today
+                .checked_sub_signed(Duration::days(days as i64))
+                .ok_or_else(|| invalid_duration(flag_name, input))
+        }
+        "m" => subtract_months(today, amount).ok_or_else(|| invalid_duration(flag_name, input)),
+        "y" => {
+            let months = amount
+                .checked_mul(12)
+                .ok_or_else(|| invalid_duration(flag_name, input))?;
+            subtract_months(today, months).ok_or_else(|| invalid_duration(flag_name, input))
+        }
+        _ => Err(invalid_duration(flag_name, input)),
+    }
+}
+
+fn invalid_duration(flag_name: &str, input: &str) -> CliError {
+    CliError::Usage(format!(
+        "invalid {flag_name} value {input:?}; expected a duration like 14d, 2w, 6m, or 1y"
+    ))
 }
 
 #[cfg(test)]
@@ -94,5 +125,42 @@ mod tests {
     fn parse_date_rejects_invalid_calendar_date() {
         let err = parse_date("2026-02-30", "--from").unwrap_err();
         assert!(matches!(err, CliError::Usage(_)));
+    }
+
+    #[test]
+    fn parse_duration_start_supports_days_weeks_months_and_years() {
+        let today = d(2026, 5, 19);
+        assert_eq!(
+            parse_duration_start("14d", today, "--used-within").unwrap(),
+            d(2026, 5, 5)
+        );
+        assert_eq!(
+            parse_duration_start("2w", today, "--used-within").unwrap(),
+            d(2026, 5, 5)
+        );
+        assert_eq!(
+            parse_duration_start("6m", today, "--used-within").unwrap(),
+            d(2025, 11, 19)
+        );
+        assert_eq!(
+            parse_duration_start("1y", today, "--used-within").unwrap(),
+            d(2025, 5, 19)
+        );
+    }
+
+    #[test]
+    fn parse_duration_start_rejects_bad_values() {
+        assert!(matches!(
+            parse_duration_start("soon", d(2026, 5, 19), "--used-within"),
+            Err(CliError::Usage(_))
+        ));
+        assert!(matches!(
+            parse_duration_start("0w", d(2026, 5, 19), "--used-within"),
+            Err(CliError::Usage(_))
+        ));
+        assert!(matches!(
+            parse_duration_start("2147483648m", d(2026, 5, 19), "--used-within"),
+            Err(CliError::Usage(_))
+        ));
     }
 }

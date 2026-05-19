@@ -38,7 +38,7 @@ _Avoid_: Song number, license number
 ```
 elvanto auth check
 elvanto songs categories           [--json] [--full-id]
-elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--full-id]
+elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--used-within DURATION] [--not-used-within DURATION] [--full-id]
 elvanto songs show <id>             [--json] [--full] [--files]
 elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement NAME]
 elvanto songs lyrics <id>           [--arrangement NAME]
@@ -54,6 +54,7 @@ Auth: `ELVANTO_API_KEY` env var (required, loaded from the shell or `.env`). No 
 - `songs list` defaults to text: `id | title | artist` using short song ids. `--album` and `--ccli` add columns; `--full-id` prints full song UUIDs
 - `songs categories` uses first UUID blocks as short ids by default; `--full-id` prints full UUIDs
 - `songs list --category-id ID` filters client-side by category id; accepts full or short ids; repeat for OR matching
+- `songs list --used-within 6m --not-used-within 2w` filters client-side by service song usage; durations support `d`, `w`, `m`, `y`
 - `songs list` filters to active songs by default in text mode, returns all in `--json`
 - `songs list` auto-fetches all pages by default
 - `songs chart` dumps chord chart text as-is

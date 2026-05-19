@@ -19,7 +19,14 @@ fn ok_page(services: Vec<serde_json::Value>) -> serde_json::Value {
     })
 }
 
-fn svc(id: &str, date: &str, name: &str, status: &str, type_name: &str, location: &str) -> serde_json::Value {
+fn svc(
+    id: &str,
+    date: &str,
+    name: &str,
+    status: &str,
+    type_name: &str,
+    location: &str,
+) -> serde_json::Value {
     serde_json::json!({
         "id": id,
         "date": date,
@@ -37,8 +44,22 @@ async fn text_output_default_window() {
     Mock::given(method("POST"))
         .and(path("/services/getAll.json"))
         .respond_with(ResponseTemplate::new(200).set_body_json(ok_page(vec![
-            svc("svc-1", "2026-04-12 09:30:00", "Sunday Morning", "Published", "Sunday Service", "Main"),
-            svc("svc-2", "2026-04-19 09:30:00", "Sunday Morning", "Draft", "Sunday Service", "Main"),
+            svc(
+                "svc-1",
+                "2026-04-12 09:30:00",
+                "Sunday Morning",
+                "Published",
+                "Sunday Service",
+                "Main",
+            ),
+            svc(
+                "svc-2",
+                "2026-04-19 09:30:00",
+                "Sunday Morning",
+                "Draft",
+                "Sunday Service",
+                "Main",
+            ),
         ])))
         .mount(&server)
         .await;
@@ -49,9 +70,9 @@ async fn text_output_default_window() {
         .args(["services", "list"])
         .assert()
         .success()
-        .stdout(
-            contains("svc-1 | 2026-04-12 | Sunday Morning | Sunday Service | Main | published"),
-        );
+        .stdout(contains(
+            "svc-1 | 2026-04-12 | Sunday Morning | Sunday Service | Main | published",
+        ));
 }
 
 #[tokio::test]
@@ -140,7 +161,14 @@ async fn from_after_to_is_usage_error() {
     bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", "http://127.0.0.1:1")
-        .args(["services", "list", "--from", "2026-05-01", "--to", "2026-04-01"])
+        .args([
+            "services",
+            "list",
+            "--from",
+            "2026-05-01",
+            "--to",
+            "2026-04-01",
+        ])
         .assert()
         .failure()
         .code(2)
