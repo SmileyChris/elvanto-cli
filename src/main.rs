@@ -28,9 +28,10 @@ fn main() -> ExitCode {
 async fn run(cli: Cli) -> Result<(), CliError> {
     let api_key = std::env::var("ELVANTO_API_KEY")
         .map_err(|_| CliError::Usage("ELVANTO_API_KEY is not set".into()))?;
-    let base_url = std::env::var("ELVANTO_BASE_URL")
-        .unwrap_or_else(|_| "https://api.elvanto.com/v1".to_string());
-    let client = api::Client::with_base_url(api_key, base_url)?;
+    let client = match std::env::var("ELVANTO_BASE_URL") {
+        Ok(url) => api::Client::with_base_url(api_key, url)?,
+        Err(_) => api::Client::new(api_key)?,
+    };
 
     if cli.verbose {
         eprintln!("verbose: api_key={}", client.redacted_key());
