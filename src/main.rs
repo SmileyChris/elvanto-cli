@@ -2,6 +2,7 @@ mod api;
 mod arrangement_select;
 mod cli;
 mod commands;
+mod date_window;
 mod domain;
 mod error;
 mod output;
@@ -13,6 +14,8 @@ use error::CliError;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
+    dotenvy::dotenv().ok();
+
     let cli = Cli::parse();
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
