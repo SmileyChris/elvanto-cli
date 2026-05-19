@@ -38,4 +38,19 @@ impl Client {
         }
         Ok(out)
     }
+
+    pub async fn get_song_info(&self, id: &str, with_files: bool) -> Result<crate::api::raw::RawSongDetail, CliError> {
+        let body = if with_files {
+            serde_json::json!({ "id": id, "files": 1 })
+        } else {
+            serde_json::json!({ "id": id })
+        };
+        let resp: crate::api::raw::SongInfoResponse =
+            self.post("songs/getInfo", &body).await?;
+        resp.songs
+            .song
+            .into_iter()
+            .next()
+            .ok_or_else(|| CliError::Api { code: 404, message: format!("song {id} not found") })
+    }
 }

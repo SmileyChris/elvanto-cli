@@ -20,13 +20,13 @@ pub struct CategoriesResponse {
     pub categories: CategoryList,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 pub struct CategoryList {
     #[serde(default)]
     pub category: Vec<RawCategory>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct RawCategory {
     pub id: String,
     pub name: String,
@@ -134,4 +134,73 @@ pub struct ArrangementsResponse {
 pub struct ArrangementInfoResponse {
     #[serde(default)]
     pub arrangement: RawArrangement,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawSongDetail {
+    pub id: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub artist: String,
+    #[serde(default)]
+    pub album: String,
+    #[serde(default)]
+    pub number: String,
+    #[serde(default)]
+    pub status: serde_json::Value,
+    #[serde(default)]
+    pub notes: String,
+    #[serde(default)]
+    pub sequence: String,
+    #[serde(default)]
+    pub bpm: String,
+    #[serde(default)]
+    pub duration: String,
+    #[serde(default)]
+    pub learn: serde_json::Value,
+    #[serde(default)]
+    pub allow_downloads: serde_json::Value,
+    #[serde(default)]
+    pub categories: CategoryList,
+    #[serde(default)]
+    pub locations: LocationList,
+    #[serde(default)]
+    pub arrangements: ArrangementList,
+    /// Present only when `files=1` requested.
+    #[serde(default)]
+    pub files: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct LocationList {
+    #[serde(default)]
+    pub location: Vec<RawLocation>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawLocation {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SongInfoResponse {
+    pub songs: SongInfoInner,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SongInfoInner {
+    #[serde(default)]
+    pub song: Vec<RawSongDetail>,
+}
+
+pub fn truthy(v: &serde_json::Value) -> bool {
+    match v {
+        serde_json::Value::Bool(b) => *b,
+        serde_json::Value::Number(n) => n.as_i64().map(|i| i != 0).unwrap_or(false),
+        serde_json::Value::String(s) => s == "1" || s.eq_ignore_ascii_case("true"),
+        _ => false,
+    }
 }

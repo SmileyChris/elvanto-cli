@@ -1,4 +1,7 @@
-use crate::api::raw::RawSong;
+use crate::api::raw::{truthy, RawSong, RawSongDetail};
+use crate::domain::arrangement::Arrangement;
+use crate::domain::category::Category;
+use crate::domain::none_if_empty;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -21,6 +24,61 @@ impl From<RawSong> for SongSummary {
             album: raw.album,
             ccli_number: raw.number,
             status,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Location {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SongDetail {
+    pub id: String,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub ccli_number: String,
+    pub status: String,
+    pub notes: Option<String>,
+    pub sequence: Option<String>,
+    pub bpm: Option<String>,
+    pub duration: Option<String>,
+    pub learn: bool,
+    pub allow_downloads: bool,
+    pub categories: Vec<Category>,
+    pub locations: Vec<Location>,
+    pub arrangements: Vec<Arrangement>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub files: Option<serde_json::Value>,
+}
+
+impl From<RawSongDetail> for SongDetail {
+    fn from(raw: RawSongDetail) -> Self {
+        let status = if truthy(&raw.status) { "active" } else { "archived" }.to_string();
+        let files = match raw.files {
+            serde_json::Value::Null => None,
+            other => Some(other),
+        };
+        Self {
+            id: raw.id,
+            title: raw.title,
+            artist: raw.artist,
+            album: raw.album,
+            ccli_number: raw.number,
+            status,
+            notes: none_if_empty(raw.notes),
+            sequence: none_if_empty(raw.sequence),
+            bpm: none_if_empty(raw.bpm),
+            duration: none_if_empty(raw.duration),
+            learn: truthy(&raw.learn),
+            allow_downloads: truthy(&raw.allow_downloads),
+            categories: raw.categories.category.into_iter().map(Into::into).collect(),
+            locations: raw.locations.location.into_iter().map(|l| Location { id: l.id, name: l.name }).collect(),
+            arrangements: raw.arrangements.arrangement.into_iter().map(Into::into).collect(),
+            files,
         }
     }
 }

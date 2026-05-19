@@ -29,21 +29,17 @@ pub struct Arrangement {
     pub chord_chart: Option<String>,
 }
 
-fn none_if_empty(s: String) -> Option<String> {
-    if s.is_empty() { None } else { Some(s) }
-}
-
 impl From<RawArrangement> for Arrangement {
     fn from(raw: RawArrangement) -> Self {
         Self {
             id: raw.id,
             name: raw.name,
-            sequence: none_if_empty(raw.sequence),
-            bpm: none_if_empty(raw.bpm),
-            duration: none_if_empty(raw.duration),
+            sequence: crate::domain::none_if_empty(raw.sequence),
+            bpm: crate::domain::none_if_empty(raw.bpm),
+            duration: crate::domain::none_if_empty(raw.duration),
             keys: raw.keys.key.into_iter().map(Into::into).collect(),
-            lyrics: none_if_empty(raw.lyrics),
-            chord_chart: none_if_empty(raw.chord_pro),
+            lyrics: crate::domain::none_if_empty(raw.lyrics),
+            chord_chart: crate::domain::none_if_empty(raw.chord_pro),
         }
     }
 }
