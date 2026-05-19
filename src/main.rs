@@ -1,5 +1,6 @@
 mod api;
 mod arrangement_select;
+mod auto_flags;
 mod cli;
 mod commands;
 mod date_window;
@@ -16,7 +17,8 @@ use std::process::ExitCode;
 fn main() -> ExitCode {
     dotenvy::dotenv().ok();
 
-    let cli = Cli::parse();
+    let args = auto_flags::apply(std::env::args().collect(), |k| std::env::var(k).ok());
+    let cli = Cli::parse_from(args);
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()

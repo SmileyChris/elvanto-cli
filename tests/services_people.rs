@@ -101,7 +101,7 @@ async fn filled_flag_hides_unfilled() {
     let out = bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["services", "people", "svc-1", "--filled"])
+        .args(["services", "people", "svc-1", "--hide-unfilled"])
         .assert()
         .success()
         .get_output()

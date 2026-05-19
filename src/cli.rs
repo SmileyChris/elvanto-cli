@@ -7,6 +7,10 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub verbose: bool,
 
+    /// Ignore ELVANTO_<SUBCOMMAND> env vars that auto-inject default flags.
+    #[arg(long, global = true)]
+    pub no_env: bool,
+
     #[command(subcommand)]
     pub command: Command,
 }
@@ -134,7 +138,7 @@ pub struct ServicesPeopleArgs {
     pub id: String,
     /// Hide unfilled positions (default: show every position).
     #[arg(long)]
-    pub filled: bool,
+    pub hide_unfilled: bool,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,

@@ -11,7 +11,7 @@ use chrono::Local;
 pub async fn run(client: &Client, args: ServicesPeopleArgs) -> Result<(), CliError> {
     let raw = fetch_with_short_id_fallback(client, &args.id).await?;
     let mut rows = volunteer_rows(&raw);
-    if args.filled {
+    if args.hide_unfilled {
         rows.retain(VolunteerRow::is_filled);
     }
 
