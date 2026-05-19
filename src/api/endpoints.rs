@@ -74,4 +74,43 @@ impl Client {
             self.post("songs/arrangements/getInfo", &body).await?;
         Ok(resp.arrangement)
     }
+
+    #[allow(dead_code)]
+    pub async fn list_services(
+        &self,
+        date_from: &str,
+        date_to: &str,
+    ) -> Result<Vec<crate::api::raw::RawService>, CliError> {
+        const SERVICES_PAGE_SIZE: u32 = 100;
+        let mut out = Vec::new();
+        let mut page: u32 = 1;
+        loop {
+            let resp: crate::api::raw::ServicesResponse = self
+                .post(
+                    "services/getAll",
+                    &serde_json::json!({
+                        "page": page,
+                        "page_size": SERVICES_PAGE_SIZE,
+                        "date_from": date_from,
+                        "date_to": date_to,
+                    }),
+                )
+                .await?;
+            let got = resp.services.service.len() as u32;
+            out.extend(resp.services.service);
+            let per_page = if resp.services.per_page == 0 {
+                SERVICES_PAGE_SIZE
+            } else {
+                resp.services.per_page
+            };
+            if got < per_page || (resp.services.total > 0 && out.len() as u32 >= resp.services.total) {
+                break;
+            }
+            page += 1;
+            if page > 1000 {
+                break;
+            }
+        }
+        Ok(out)
+    }
 }

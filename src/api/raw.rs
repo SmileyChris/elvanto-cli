@@ -211,3 +211,60 @@ pub fn truthy(v: &serde_json::Value) -> bool {
         _ => false,
     }
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ServicesResponse {
+    #[serde(default)]
+    pub services: ServiceList,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct ServiceList {
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub page: u32,
+    #[serde(default)]
+    pub per_page: u32,
+    #[serde(default)]
+    pub total: u32,
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub on_this_page: u32,
+    #[serde(default)]
+    pub service: Vec<RawService>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawService {
+    pub id: String,
+    #[serde(default)]
+    pub date: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub service_type: RawServiceType,
+    #[serde(default)]
+    pub location: RawServiceLocation,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceType {
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceLocation {
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+}
