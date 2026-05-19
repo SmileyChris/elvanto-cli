@@ -1,3 +1,18 @@
-fn main() {
-    println!("elvanto-cli v{}", env!("CARGO_PKG_VERSION"));
+mod error;
+
+use error::CliError;
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
+    match run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            eprintln!("error: {err}");
+            ExitCode::from(err.exit_code() as u8)
+        }
+    }
+}
+
+fn run() -> Result<(), CliError> {
+    Ok(())
 }
