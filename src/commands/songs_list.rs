@@ -6,7 +6,7 @@ use crate::domain::song::SongSummary;
 use crate::error::CliError;
 use crate::output;
 use chrono::{Local, NaiveDate};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
     let SongsListArgs {
@@ -15,6 +15,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         ccli,
         category_ids,
         full_id,
+        last_used,
         used_within,
         not_used_within,
     } = args;
@@ -28,6 +29,8 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         .as_deref()
         .map(|duration| parse_duration_start(duration, today, "--not-used-within"))
         .transpose()?;
+    let has_service_usage_filter = used_start.is_some() || not_used_start.is_some();
+    let show_last_used = last_used || has_service_usage_filter;
 
     let mut raws = client.list_all_songs().await?;
     if !category_ids.is_empty() {
@@ -41,42 +44,73 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         });
     }
 
-    if used_start.is_some() || not_used_start.is_some() {
-        let service_from = [used_start, not_used_start]
-            .into_iter()
-            .flatten()
-            .min()
-            .unwrap_or(today);
+    let mut last_used_by_song = HashMap::new();
+    if show_last_used {
+        let service_from = if has_service_usage_filter {
+            [used_start, not_used_start]
+                .into_iter()
+                .flatten()
+                .min()
+                .unwrap_or(today)
+        } else {
+            parse_duration_start("1y", today, "--last-used")?
+        };
         let service_from_str = service_from.format("%Y-%m-%d").to_string();
         let today_str = today.format("%Y-%m-%d").to_string();
         let services = client
             .list_services_with_song_usage(&service_from_str, &today_str)
             .await?;
 
-        let mut used_song_ids = HashSet::new();
-        let mut recently_used_song_ids = HashSet::new();
         for service in &services {
             let Some(date) = service_date(&service.date) else {
                 continue;
             };
-            let song_ids = service.song_ids();
-            if used_start.is_some_and(|start| date >= start) {
-                used_song_ids.extend(song_ids.iter().map(|id| (*id).to_string()));
-            }
-            if not_used_start.is_some_and(|start| date >= start) {
-                recently_used_song_ids.extend(song_ids.iter().map(|id| (*id).to_string()));
+            for song_id in service.song_ids() {
+                last_used_by_song
+                    .entry(song_id.to_string())
+                    .and_modify(|last: &mut NaiveDate| {
+                        if date > *last {
+                            *last = date;
+                        }
+                    })
+                    .or_insert(date);
             }
         }
 
-        if used_start.is_some() {
-            raws.retain(|song| used_song_ids.contains(&song.id));
+        if let Some(start) = used_start {
+            raws.retain(|song| {
+                last_used_by_song
+                    .get(&song.id)
+                    .is_some_and(|last| *last >= start)
+            });
         }
-        if not_used_start.is_some() {
-            raws.retain(|song| !recently_used_song_ids.contains(&song.id));
+        if let Some(start) = not_used_start {
+            raws.retain(|song| {
+                last_used_by_song
+                    .get(&song.id)
+                    .is_none_or(|last| *last < start)
+            });
         }
     }
 
-    let all: Vec<SongSummary> = raws.into_iter().map(Into::into).collect();
+    let mut all: Vec<SongSummary> = raws
+        .into_iter()
+        .map(|raw| {
+            let mut song: SongSummary = raw.into();
+            if show_last_used {
+                song.last_used = last_used_by_song
+                    .get(&song.id)
+                    .map(|date| date.format("%Y-%m-%d").to_string());
+            }
+            song
+        })
+        .collect();
+
+    // --last-used (explicit) sorts most-recent-first; songs never used go to the end.
+    // Date strings are YYYY-MM-DD so lexicographic order = chronological order.
+    if last_used {
+        all.sort_by(|a, b| b.last_used.cmp(&a.last_used));
+    }
 
     let stdout = std::io::stdout();
     let mut lock = stdout.lock();
@@ -85,7 +119,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         output::json::write_pretty(&mut lock, &all)
     } else {
         let active: Vec<SongSummary> = all.into_iter().filter(|s| s.status == "active").collect();
-        output::text::write_songs(&mut lock, &active, album, ccli, full_id)
+        output::text::write_songs(&mut lock, &active, album, ccli, full_id, show_last_used)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

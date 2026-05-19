@@ -1,7 +1,9 @@
 use assert_cmd::Command;
 
-/// Spawn the `elvanto` binary with all autoflag env vars stripped so that
-/// a parent shell's `ELVANTO_SONGS_LIST=--json` (etc.) can't leak into tests.
+/// Spawn the `elvanto` binary with all autoflag env vars neutralised so that
+/// a parent shell's `ELVANTO_SONGS_LIST=--json` (etc.) — or a local `.env` —
+/// can't leak into tests. We set empty-string rather than `env_remove` so
+/// that dotenvy doesn't repopulate the variables from `.env`.
 #[allow(dead_code)]
 pub fn bin() -> Command {
     let mut c = Command::cargo_bin("elvanto").unwrap();
@@ -15,7 +17,7 @@ pub fn bin() -> Command {
         "ELVANTO_SONGS_LYRICS",
         "ELVANTO_SONGS_SHOW",
     ] {
-        c.env_remove(var);
+        c.env(var, "");
     }
     c
 }

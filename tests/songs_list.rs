@@ -1,5 +1,5 @@
 mod common;
-use chrono::{Duration, Local, NaiveDate};
+use chrono::{Duration, Local, Months, NaiveDate};
 use common::{bin, mock_server};
 use predicates::prelude::PredicateBooleanExt;
 use predicates::str::contains;
@@ -376,9 +376,93 @@ async fn service_usage_filters_include_and_exclude_windows() {
         .clone();
     let text = String::from_utf8(out).unwrap();
 
-    assert!(text.contains("keep | Keep | A"));
+    assert!(text.contains(&format!("keep | Keep | A | {}", older.format("%Y-%m-%d"))));
     assert!(!text.contains("Recent"));
     assert!(!text.contains("Never"));
+}
+
+#[tokio::test]
+async fn last_used_flag_adds_column_without_filtering() {
+    let server = mock_server().await;
+    let today = Local::now().date_naive();
+    let start = today.checked_sub_months(Months::new(12)).unwrap();
+    let older = today - Duration::days(40);
+    let recent = today - Duration::days(3);
+
+    Mock::given(method("POST"))
+        .and(path("/songs/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(page(
+            1,
+            3,
+            3,
+            vec![
+                song("old-0000-0000-0000-000000000000", "Old", "A", "1", "", ""),
+                song(
+                    "recent-0000-0000-0000-000000000000",
+                    "Recent",
+                    "B",
+                    "1",
+                    "",
+                    "",
+                ),
+                song(
+                    "never-0000-0000-0000-000000000000",
+                    "Never",
+                    "C",
+                    "1",
+                    "",
+                    "",
+                ),
+            ],
+        )))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/services/getAll.json"))
+        .and(body_partial_json(serde_json::json!({
+            "start": start.format("%Y-%m-%d").to_string(),
+            "end": today.format("%Y-%m-%d").to_string(),
+            "fields": ["songs", "plans"]
+        })))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(service_usage_page(vec![
+                service_with_usage("svc-old", older, &["old-0000-0000-0000-000000000000"], &[]),
+                service_with_usage(
+                    "svc-recent",
+                    recent,
+                    &[],
+                    &["recent-0000-0000-0000-000000000000"],
+                ),
+            ])),
+        )
+        .mount(&server)
+        .await;
+
+    let out = bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["songs", "list", "--last-used"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(out).unwrap();
+
+    assert!(text.contains(&format!("old | Old | A | {}", older.format("%Y-%m-%d"))));
+    assert!(text.contains(&format!(
+        "recent | Recent | B | {}",
+        recent.format("%Y-%m-%d")
+    )));
+    assert!(text.contains("never | Never | C | -"));
+
+    // --last-used sorts most-recent-first; never-used goes to the end.
+    let lines: Vec<&str> = text.lines().collect();
+    let recent_idx = lines.iter().position(|l| l.contains("Recent")).unwrap();
+    let old_idx = lines.iter().position(|l| l.contains("Old")).unwrap();
+    let never_idx = lines.iter().position(|l| l.contains("Never")).unwrap();
+    assert!(recent_idx < old_idx, "recent should come before old");
+    assert!(old_idx < never_idx, "old should come before never");
 }
 
 #[tokio::test]
