@@ -5,6 +5,7 @@ mod commands;
 mod domain;
 mod error;
 mod output;
+mod transpose;
 
 use clap::Parser;
 use cli::{Cli, Command};
