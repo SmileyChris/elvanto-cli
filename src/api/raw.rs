@@ -82,3 +82,56 @@ impl RawSong {
         if self.is_active() { "active" } else { "archived" }
     }
 }
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct ArrangementList {
+    #[serde(default)]
+    pub arrangement: Vec<RawArrangement>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawArrangement {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub sequence: String,
+    #[serde(default)]
+    pub bpm: String,
+    #[serde(default)]
+    pub duration: String,
+    /// Chord chart text. Field name varies by Elvanto endpoint version; accept both.
+    #[serde(default, alias = "chord_chart")]
+    pub chord_pro: String,
+    #[serde(default)]
+    pub lyrics: String,
+    #[serde(default)]
+    pub keys: KeyList,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct KeyList {
+    #[serde(default)]
+    pub key: Vec<RawKey>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawKey {
+    pub id: String,
+    #[serde(default, alias = "starting_key")]
+    pub starting: String,
+    #[serde(default, alias = "ending_key")]
+    pub ending: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ArrangementsResponse {
+    #[serde(default)]
+    pub arrangements: ArrangementList,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ArrangementInfoResponse {
+    #[serde(default)]
+    pub arrangement: RawArrangement,
+}
