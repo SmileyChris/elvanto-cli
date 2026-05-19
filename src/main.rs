@@ -1,4 +1,5 @@
 mod api;
+mod arrangement_select;
 mod cli;
 mod commands;
 mod domain;
