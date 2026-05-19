@@ -32,11 +32,13 @@ impl Client {
 
     pub fn redacted_key(&self) -> String {
         let k = &self.api_key;
-        if k.len() <= 8 {
-            "*".repeat(k.len())
-        } else {
-            format!("{}…{}", &k[..4], &k[k.len() - 4..])
+        let char_count = k.chars().count();
+        if char_count <= 8 {
+            return "*".repeat(char_count);
         }
+        let head: String = k.chars().take(4).collect();
+        let tail: String = k.chars().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect();
+        format!("{head}…{tail}")
     }
 
     pub async fn post<B, T>(&self, endpoint: &str, body: &B) -> Result<T, CliError>
@@ -162,5 +164,12 @@ mod tests {
     fn redact_long_key() {
         let c = Client::with_base_url("abcdefghijkl".into(), "http://x".into()).unwrap();
         assert_eq!(c.redacted_key(), "abcd…ijkl");
+    }
+
+    #[test]
+    fn redact_boundary_9_chars() {
+        let c = Client::with_base_url("abcdefghi".into(), "http://x".into()).unwrap();
+        // 9 chars > 8 → take head/tail
+        assert_eq!(c.redacted_key(), "abcd…fghi");
     }
 }
