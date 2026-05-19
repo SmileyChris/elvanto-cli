@@ -8,6 +8,24 @@ use serde::Serialize;
 
 const DEFAULT_BASE_URL: &str = "https://api.elvanto.com/v1";
 
+/// Char-aware redaction: first 4 + `…` + last 4 chars, or all-stars when ≤ 8.
+pub fn redact_key(k: &str) -> String {
+    let char_count = k.chars().count();
+    if char_count <= 8 {
+        return "*".repeat(char_count);
+    }
+    let head: String = k.chars().take(4).collect();
+    let tail: String = k
+        .chars()
+        .rev()
+        .take(4)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
+    format!("{head}\u{2026}{tail}")
+}
+
 pub struct Client {
     http: Http,
     base_url: String,
@@ -35,21 +53,7 @@ impl Client {
     }
 
     pub fn redacted_key(&self) -> String {
-        let k = &self.api_key;
-        let char_count = k.chars().count();
-        if char_count <= 8 {
-            return "*".repeat(char_count);
-        }
-        let head: String = k.chars().take(4).collect();
-        let tail: String = k
-            .chars()
-            .rev()
-            .take(4)
-            .collect::<Vec<_>>()
-            .into_iter()
-            .rev()
-            .collect();
-        format!("{head}…{tail}")
+        redact_key(&self.api_key)
     }
 
     pub async fn post<B, T>(&self, endpoint: &str, body: &B) -> Result<T, CliError>

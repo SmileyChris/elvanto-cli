@@ -47,6 +47,8 @@ pub enum AuthCommand {
     Login(AuthLoginArgs),
     /// Remove the API key from the OS keyring.
     Clear,
+    /// Show key source (env / keyring / none) and verify against Elvanto.
+    Status,
 }
 
 #[derive(Debug, Clone, Args)]

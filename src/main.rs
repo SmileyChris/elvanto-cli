@@ -50,12 +50,13 @@ fn resolve_api_key() -> Result<String, CliError> {
 }
 
 async fn run(cli: Cli) -> Result<(), CliError> {
-    // auth login / auth clear don't talk to the API, so handle them before
-    // attempting to resolve a key.
+    // auth login/clear/status manage their own credential resolution, so
+    // handle them before the global resolve step.
     if let Command::Auth { command } = &cli.command {
         match command {
             cli::AuthCommand::Login(args) => return commands::auth_login::run(args.clone()),
             cli::AuthCommand::Clear => return commands::auth_clear::run(),
+            cli::AuthCommand::Status => return commands::auth_status::run().await,
             cli::AuthCommand::Check => {}
         }
     }
@@ -74,7 +75,9 @@ async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Auth { command } => match command {
             cli::AuthCommand::Check => commands::auth_check::run(&client).await,
             // Handled above.
-            cli::AuthCommand::Login(_) | cli::AuthCommand::Clear => unreachable!(),
+            cli::AuthCommand::Login(_) | cli::AuthCommand::Clear | cli::AuthCommand::Status => {
+                unreachable!()
+            }
         },
         Command::People { command } => match command {
             cli::PeopleCommand::List(args) => commands::people_list::run(&client, args).await,
