@@ -255,14 +255,14 @@ pub struct ServicesResponse {
 #[derive(Debug, Deserialize, Default)]
 pub struct ServiceList {
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub page: u32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub per_page: u32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub total: u32,
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub on_this_page: u32,
     #[serde(default)]
     pub service: Vec<RawService>,
