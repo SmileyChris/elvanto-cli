@@ -13,10 +13,20 @@ pub struct VolunteerRow {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
 }
 
 impl VolunteerRow {
-    #[allow(dead_code)]
+    pub fn matches_department(&self, filters: &[String]) -> bool {
+        if filters.is_empty() {
+            return true;
+        }
+        filters.iter().any(|f| {
+            self.department.eq_ignore_ascii_case(f) || self.sub_department.eq_ignore_ascii_case(f)
+        })
+    }
+
     pub fn is_filled(&self) -> bool {
         self.person_id.is_some()
     }
@@ -38,6 +48,7 @@ pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
                     person_id: None,
                     name: None,
                     status: None,
+                    email: None,
                 });
             } else {
                 for v in &position.volunteers.volunteer {
@@ -57,6 +68,7 @@ pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
                         } else {
                             Some(v.status.to_ascii_lowercase())
                         },
+                        email: None,
                     });
                 }
             }

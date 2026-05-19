@@ -223,6 +223,131 @@ async fn short_id_resolves_via_list_when_direct_lookup_fails() {
 }
 
 #[tokio::test]
+async fn department_filter_or_matches_department_or_sub_department() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(ok_body(vec![
+            // sub_department match: "Service Leaders"
+            pos_filled(
+                "Service Teams",
+                "Service Leaders",
+                "Preaching",
+                "Annedien Looyenga",
+                "Confirmed",
+            ),
+            // department match: "Vocals"
+            pos_filled("Vocals", "", "Worship Leader", "Chris Beaven", "Confirmed"),
+            // no match — should be filtered out
+            pos_filled("Welcome Team", "", "Greeter", "Alison Doig", "Confirmed"),
+        ])))
+        .mount(&server)
+        .await;
+
+    let out = bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args([
+            "services",
+            "people",
+            "svc-1",
+            "--department",
+            "Service Leaders",
+            "--department",
+            "Vocals",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(out).unwrap();
+    assert!(text.contains("Preaching"));
+    assert!(text.contains("Worship Leader"));
+    assert!(!text.contains("Greeter"));
+}
+
+#[tokio::test]
+async fn email_flag_appends_email_column_from_people_lookup() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(ok_body(vec![pos_filled(
+                "Vocals",
+                "",
+                "Worship Leader",
+                "Chris Beaven",
+                "Confirmed",
+            )])),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/people/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "people": {
+                "page": 1, "per_page": 1000, "total": 1, "on_this_page": 1,
+                "person": [
+                    { "id": "p-chris", "email": "chris@example.com" }
+                ]
+            }
+        })))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["services", "people", "svc-1", "--email"])
+        .assert()
+        .success()
+        .stdout(contains(
+            "Vocals | Worship Leader | Chris Beaven | confirmed | chris@example.com",
+        ));
+}
+
+#[tokio::test]
+async fn email_missing_in_people_map_shows_dash() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(ok_body(vec![pos_filled(
+                "Vocals",
+                "",
+                "Worship Leader",
+                "Chris Beaven",
+                "Confirmed",
+            )])),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/people/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "people": {
+                "page": 1, "per_page": 1000, "total": 0, "on_this_page": 0,
+                "person": []
+            }
+        })))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["services", "people", "svc-1", "--email"])
+        .assert()
+        .success()
+        .stdout(contains(
+            "Vocals | Worship Leader | Chris Beaven | confirmed | -",
+        ));
+}
+
+#[tokio::test]
 async fn service_not_found_exits_1() {
     let server = mock_server().await;
     Mock::given(method("POST"))

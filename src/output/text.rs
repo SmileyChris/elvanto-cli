@@ -146,7 +146,11 @@ pub fn write_services<W: Write>(w: &mut W, services: &[Service], full_id: bool) 
 
 use crate::domain::service::VolunteerRow;
 
-pub fn write_service_people<W: Write>(w: &mut W, rows: &[VolunteerRow]) -> io::Result<()> {
+pub fn write_service_people<W: Write>(
+    w: &mut W,
+    rows: &[VolunteerRow],
+    show_email: bool,
+) -> io::Result<()> {
     for r in rows {
         let dept = if r.sub_department.is_empty() {
             r.department.as_str()
@@ -155,7 +159,11 @@ pub fn write_service_people<W: Write>(w: &mut W, rows: &[VolunteerRow]) -> io::R
         };
         let name = r.name.as_deref().unwrap_or("(unfilled)");
         let status = r.status.as_deref().unwrap_or("-");
-        writeln!(w, "{} | {} | {} | {}", dept, r.position, name, status)?;
+        write!(w, "{} | {} | {} | {}", dept, r.position, name, status)?;
+        if show_email {
+            write!(w, " | {}", r.email.as_deref().unwrap_or("-"))?;
+        }
+        writeln!(w)?;
     }
     Ok(())
 }

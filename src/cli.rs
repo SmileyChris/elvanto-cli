@@ -139,6 +139,12 @@ pub struct ServicesPeopleArgs {
     /// Hide unfilled positions (default: show every position).
     #[arg(long)]
     pub hide_unfilled: bool,
+    /// Keep rows where the department or sub-department matches (case-insensitive); repeat to OR-match.
+    #[arg(long, value_name = "NAME")]
+    pub department: Vec<String>,
+    /// Include each person's primary email in the output.
+    #[arg(long)]
+    pub email: bool,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,

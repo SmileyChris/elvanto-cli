@@ -11,8 +11,19 @@ use chrono::Local;
 pub async fn run(client: &Client, args: ServicesPeopleArgs) -> Result<(), CliError> {
     let raw = fetch_with_short_id_fallback(client, &args.id).await?;
     let mut rows = volunteer_rows(&raw);
+    if !args.department.is_empty() {
+        rows.retain(|r| r.matches_department(&args.department));
+    }
     if args.hide_unfilled {
         rows.retain(VolunteerRow::is_filled);
+    }
+    if args.email {
+        let emails = client.list_people_emails().await?;
+        for row in rows.iter_mut() {
+            if let Some(id) = &row.person_id {
+                row.email = emails.get(id).cloned();
+            }
+        }
     }
 
     let stdout = std::io::stdout();
@@ -20,7 +31,7 @@ pub async fn run(client: &Client, args: ServicesPeopleArgs) -> Result<(), CliErr
     let res = if args.json {
         output::json::write_pretty(&mut lock, &rows)
     } else {
-        output::text::write_service_people(&mut lock, &rows)
+        output::text::write_service_people(&mut lock, &rows, args.email)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

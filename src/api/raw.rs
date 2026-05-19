@@ -386,6 +386,35 @@ pub struct ServiceInfoResponse {
     pub service: Vec<RawService>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PeopleResponse {
+    #[serde(default)]
+    pub people: PeopleList,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct PeopleList {
+    #[allow(dead_code)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
+    pub page: u32,
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
+    pub per_page: u32,
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
+    pub total: u32,
+    #[allow(dead_code)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
+    pub on_this_page: u32,
+    #[serde(default)]
+    pub person: Vec<RawPersonRecord>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonRecord {
+    pub id: String,
+    #[serde(default)]
+    pub email: String,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawServiceVolunteers {
