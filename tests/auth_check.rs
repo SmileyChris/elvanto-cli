@@ -107,5 +107,5 @@ fn check_fails_without_api_key() {
         .assert()
         .failure()
         .code(2)
-        .stderr(contains("ELVANTO_API_KEY is not set"));
+        .stderr(contains("no API key found"));
 }

@@ -1,4 +1,6 @@
 pub mod auth_check;
+pub mod auth_clear;
+pub mod auth_login;
 pub mod people_departments;
 pub mod people_list;
 pub mod services_list;

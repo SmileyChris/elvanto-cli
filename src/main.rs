@@ -6,6 +6,7 @@ mod commands;
 mod date_window;
 mod domain;
 mod error;
+mod keyring_store;
 mod output;
 mod transpose;
 
@@ -34,9 +35,32 @@ fn main() -> ExitCode {
     }
 }
 
+fn resolve_api_key() -> Result<String, CliError> {
+    if let Ok(k) = std::env::var("ELVANTO_API_KEY") {
+        if !k.is_empty() {
+            return Ok(k);
+        }
+    }
+    match keyring_store::get()? {
+        Some(k) if !k.is_empty() => Ok(k),
+        _ => Err(CliError::Usage(
+            "no API key found; set ELVANTO_API_KEY or run `elvanto auth login`".into(),
+        )),
+    }
+}
+
 async fn run(cli: Cli) -> Result<(), CliError> {
-    let api_key = std::env::var("ELVANTO_API_KEY")
-        .map_err(|_| CliError::Usage("ELVANTO_API_KEY is not set".into()))?;
+    // auth login / auth clear don't talk to the API, so handle them before
+    // attempting to resolve a key.
+    if let Command::Auth { command } = &cli.command {
+        match command {
+            cli::AuthCommand::Login(args) => return commands::auth_login::run(args.clone()),
+            cli::AuthCommand::Clear => return commands::auth_clear::run(),
+            cli::AuthCommand::Check => {}
+        }
+    }
+
+    let api_key = resolve_api_key()?;
     let client = match std::env::var("ELVANTO_BASE_URL") {
         Ok(url) => api::Client::with_base_url(api_key, url)?,
         Err(_) => api::Client::new(api_key)?,
@@ -49,6 +73,8 @@ async fn run(cli: Cli) -> Result<(), CliError> {
     match cli.command {
         Command::Auth { command } => match command {
             cli::AuthCommand::Check => commands::auth_check::run(&client).await,
+            // Handled above.
+            cli::AuthCommand::Login(_) | cli::AuthCommand::Clear => unreachable!(),
         },
         Command::People { command } => match command {
             cli::PeopleCommand::List(args) => commands::people_list::run(&client, args).await,

@@ -43,6 +43,17 @@ pub enum Command {
 pub enum AuthCommand {
     /// Verify the configured API key works.
     Check,
+    /// Store an API key in the OS keyring.
+    Login(AuthLoginArgs),
+    /// Remove the API key from the OS keyring.
+    Clear,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct AuthLoginArgs {
+    /// Read the API key from stdin (one line) instead of prompting.
+    #[arg(long)]
+    pub stdin: bool,
 }
 
 #[derive(Debug, Subcommand)]
