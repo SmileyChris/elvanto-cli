@@ -1,7 +1,6 @@
 use crate::api::raw::RawCategory;
 use serde::Serialize;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Category {
     pub id: String,

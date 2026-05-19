@@ -3,6 +3,7 @@ mod cli;
 mod commands;
 mod domain;
 mod error;
+mod output;
 
 use clap::Parser;
 use cli::{Cli, Command};
@@ -42,8 +43,9 @@ async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Auth { command } => match command {
             cli::AuthCommand::Check => commands::auth_check::run(&client).await,
         },
-        Command::Songs { command: _ } => {
-            Err(CliError::Usage("songs commands not implemented yet".into()))
-        }
+        Command::Songs { command } => match command {
+            cli::SongsCommand::Categories(args) => commands::songs_categories::run(&client, args).await,
+            _ => Err(CliError::Usage("not implemented yet".into())),
+        },
     }
 }

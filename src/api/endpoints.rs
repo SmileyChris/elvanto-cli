@@ -3,7 +3,6 @@ use crate::api::Client;
 use crate::error::CliError;
 
 impl Client {
-    #[allow(dead_code)]
     pub async fn list_categories(&self) -> Result<Vec<RawCategory>, CliError> {
         let resp: CategoriesResponse = self
             .post("songs/categories/getAll", &serde_json::json!({}))

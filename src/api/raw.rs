@@ -26,7 +26,6 @@ pub struct CategoryList {
     pub category: Vec<RawCategory>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct RawCategory {
     pub id: String,
