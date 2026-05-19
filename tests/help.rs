@@ -14,15 +14,11 @@ fn shows_top_level_help() {
 
 #[test]
 fn songs_subcommands_listed() {
-    bin()
-        .args(["songs", "--help"])
-        .assert()
-        .success()
-        .stdout(
-            contains("categories")
-                .and(contains("list"))
-                .and(contains("show"))
-                .and(contains("chart"))
-                .and(contains("lyrics")),
-        );
+    bin().args(["songs", "--help"]).assert().success().stdout(
+        contains("categories")
+            .and(contains("list"))
+            .and(contains("show"))
+            .and(contains("chart"))
+            .and(contains("lyrics")),
+    );
 }

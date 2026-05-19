@@ -1,7 +1,11 @@
 use crate::error::CliError;
 
-const KEYS_SHARP: [&str; 12] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const KEYS_FLAT: [&str; 12] = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+const KEYS_SHARP: [&str; 12] = [
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+];
+const KEYS_FLAT: [&str; 12] = [
+    "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B",
+];
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Request {
@@ -30,10 +34,11 @@ pub fn resolve(req: &Request, starting: &str) -> Result<String, CliError> {
     match req {
         Request::Named(k) => Ok(k.clone()),
         Request::Offset(n) => {
-            let base = key_index(starting)
-                .ok_or_else(|| CliError::NotFound(format!(
+            let base = key_index(starting).ok_or_else(|| {
+                CliError::NotFound(format!(
                     "cannot transpose: unknown starting key {starting:?}"
-                )))?;
+                ))
+            })?;
             let prefer_flats = starting.contains('b');
             let idx = ((base as i32 + *n).rem_euclid(12)) as usize;
             let table = if prefer_flats { KEYS_FLAT } else { KEYS_SHARP };

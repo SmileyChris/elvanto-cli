@@ -10,13 +10,9 @@ pub async fn run(client: &Client, args: SongsLyricsArgs) -> Result<(), CliError>
 
     let sel = arrangement_select::select(&detail.arrangements, args.arrangement.as_deref())?;
 
-    let lyrics = sel
-        .chosen
-        .lyrics
-        .as_deref()
-        .ok_or_else(|| CliError::NotFound(format!(
-            "arrangement {:?} has no lyrics", sel.chosen.name
-        )))?;
+    let lyrics = sel.chosen.lyrics.as_deref().ok_or_else(|| {
+        CliError::NotFound(format!("arrangement {:?} has no lyrics", sel.chosen.name))
+    })?;
     println!("{lyrics}");
 
     if !sel.others.is_empty() {

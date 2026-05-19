@@ -26,11 +26,9 @@ async fn chart_without_transpose_uses_song_detail() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_chart(
-            "Default",
-            "[G]Hello",
-            "G",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_chart("Default", "[G]Hello", "G")),
+        )
         .mount(&server)
         .await;
 
@@ -48,11 +46,9 @@ async fn chart_with_named_transpose_calls_arrangement_info() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_chart(
-            "Default",
-            "[G]Hello",
-            "G",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_chart("Default", "[G]Hello", "G")),
+        )
         .mount(&server)
         .await;
     Mock::given(method("POST"))
@@ -87,11 +83,9 @@ async fn chart_with_offset_transpose_resolves_against_starting_key() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_chart(
-            "Default",
-            "[G]Hello",
-            "G",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_chart("Default", "[G]Hello", "G")),
+        )
         .mount(&server)
         .await;
     Mock::given(method("POST"))
@@ -126,11 +120,9 @@ async fn invalid_transpose_value_is_usage_error() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_chart(
-            "Default",
-            "[G]Hello",
-            "G",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_chart("Default", "[G]Hello", "G")),
+        )
         .mount(&server)
         .await;
 

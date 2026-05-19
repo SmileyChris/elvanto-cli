@@ -1,5 +1,5 @@
-pub mod raw;
 mod endpoints;
+pub mod raw;
 
 use crate::error::CliError;
 use reqwest::Client as Http;
@@ -27,7 +27,11 @@ impl Client {
             .user_agent(concat!("elvanto-cli/", env!("CARGO_PKG_VERSION")))
             .build()
             .map_err(|e| CliError::Network(e.to_string()))?;
-        Ok(Self { http, base_url, api_key })
+        Ok(Self {
+            http,
+            base_url,
+            api_key,
+        })
     }
 
     pub fn redacted_key(&self) -> String {
@@ -37,7 +41,14 @@ impl Client {
             return "*".repeat(char_count);
         }
         let head: String = k.chars().take(4).collect();
-        let tail: String = k.chars().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect();
+        let tail: String = k
+            .chars()
+            .rev()
+            .take(4)
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect();
         format!("{head}…{tail}")
     }
 
@@ -66,15 +77,18 @@ impl Client {
                 .map_err(|e| CliError::Network(format!("decode error: {e}"))),
             Some("error") => {
                 let err: raw::ApiError = serde_json::from_value(
-                    value.get("error").cloned().unwrap_or(serde_json::Value::Null),
+                    value
+                        .get("error")
+                        .cloned()
+                        .unwrap_or(serde_json::Value::Null),
                 )
                 .map_err(|e| CliError::Network(format!("decode error: {e}")))?;
-                Err(CliError::Api { code: err.code, message: err.message })
+                Err(CliError::Api {
+                    code: err.code,
+                    message: err.message,
+                })
             }
-            other => Err(CliError::Network(format!(
-                "unexpected status: {:?}",
-                other
-            ))),
+            other => Err(CliError::Network(format!("unexpected status: {:?}", other))),
         }
     }
 }

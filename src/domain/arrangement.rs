@@ -10,8 +10,16 @@ pub struct Key {
 
 impl From<RawKey> for Key {
     fn from(raw: RawKey) -> Self {
-        let ending = if raw.ending.is_empty() { None } else { Some(raw.ending) };
-        Self { id: raw.id, starting: raw.starting, ending }
+        let ending = if raw.ending.is_empty() {
+            None
+        } else {
+            Some(raw.ending)
+        };
+        Self {
+            id: raw.id,
+            starting: raw.starting,
+            ending,
+        }
     }
 }
 
@@ -51,7 +59,11 @@ mod tests {
 
     #[test]
     fn empty_ending_key_becomes_none() {
-        let raw = RawKey { id: "k1".into(), starting: "G".into(), ending: String::new() };
+        let raw = RawKey {
+            id: "k1".into(),
+            starting: "G".into(),
+            ending: String::new(),
+        };
         let key: Key = raw.into();
         assert_eq!(key.ending, None);
     }

@@ -57,7 +57,12 @@ pub struct SongDetail {
 
 impl From<RawSongDetail> for SongDetail {
     fn from(raw: RawSongDetail) -> Self {
-        let status = if truthy(&raw.status) { "active" } else { "archived" }.to_string();
+        let status = if truthy(&raw.status) {
+            "active"
+        } else {
+            "archived"
+        }
+        .to_string();
         let files = match raw.files {
             serde_json::Value::Null => None,
             other => Some(other),
@@ -75,9 +80,27 @@ impl From<RawSongDetail> for SongDetail {
             duration: none_if_empty(raw.duration),
             learn: truthy(&raw.learn),
             allow_downloads: truthy(&raw.allow_downloads),
-            categories: raw.categories.category.into_iter().map(Into::into).collect(),
-            locations: raw.locations.location.into_iter().map(|l| Location { id: l.id, name: l.name }).collect(),
-            arrangements: raw.arrangements.arrangement.into_iter().map(Into::into).collect(),
+            categories: raw
+                .categories
+                .category
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            locations: raw
+                .locations
+                .location
+                .into_iter()
+                .map(|l| Location {
+                    id: l.id,
+                    name: l.name,
+                })
+                .collect(),
+            arrangements: raw
+                .arrangements
+                .arrangement
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             files,
         }
     }

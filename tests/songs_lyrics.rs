@@ -28,10 +28,12 @@ async fn picks_default_arrangement() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
-            arr("Acoustic", "Acoustic lyrics"),
-            arr("Default", "Default lyrics"),
-        ])))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
+                arr("Acoustic", "Acoustic lyrics"),
+                arr("Default", "Default lyrics"),
+            ])),
+        )
         .mount(&server)
         .await;
 
@@ -49,11 +51,13 @@ async fn hints_other_arrangements_on_stderr() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
-            arr("Default", "Default lyrics"),
-            arr("Acoustic", "Acoustic lyrics"),
-            arr("Live", "Live lyrics"),
-        ])))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
+                arr("Default", "Default lyrics"),
+                arr("Acoustic", "Acoustic lyrics"),
+                arr("Live", "Live lyrics"),
+            ])),
+        )
         .mount(&server)
         .await;
 
@@ -71,10 +75,12 @@ async fn arrangement_override() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
-            arr("Default", "Default lyrics"),
-            arr("Acoustic", "Acoustic lyrics"),
-        ])))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
+                arr("Default", "Default lyrics"),
+                arr("Acoustic", "Acoustic lyrics"),
+            ])),
+        )
         .mount(&server)
         .await;
 
@@ -92,9 +98,12 @@ async fn missing_arrangement_is_usage_error() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![
-            arr("Default", "Default lyrics"),
-        ])))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(song_with_arrangements(vec![arr(
+                "Default",
+                "Default lyrics",
+            )])),
+        )
         .mount(&server)
         .await;
 

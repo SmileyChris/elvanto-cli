@@ -13,27 +13,28 @@ pub async fn run(client: &Client, args: SongsChartArgs) -> Result<(), CliError> 
     let chosen = sel.chosen;
 
     let chart = match args.transpose.as_deref() {
-        None => chosen
-            .chord_chart
-            .clone()
-            .ok_or_else(|| CliError::NotFound(format!(
-                "arrangement {:?} has no chord chart", chosen.name
-            )))?,
+        None => chosen.chord_chart.clone().ok_or_else(|| {
+            CliError::NotFound(format!("arrangement {:?} has no chord chart", chosen.name))
+        })?,
         Some(input) => {
             let req = transpose::parse(input)?;
             let starting = chosen
                 .keys
                 .first()
                 .map(|k| k.starting.as_str())
-                .ok_or_else(|| CliError::NotFound(format!(
-                    "arrangement {:?} has no key", chosen.name
-                )))?;
+                .ok_or_else(|| {
+                    CliError::NotFound(format!("arrangement {:?} has no key", chosen.name))
+                })?;
             let target = transpose::resolve(&req, starting)?;
-            let raw_arr = client.get_arrangement_info(&chosen.id, Some(&target)).await?;
+            let raw_arr = client
+                .get_arrangement_info(&chosen.id, Some(&target))
+                .await?;
             let arr: Arrangement = raw_arr.into();
-            arr.chord_chart.ok_or_else(|| CliError::NotFound(format!(
-                "Elvanto returned no transposed chord chart for {target}"
-            )))?
+            arr.chord_chart.ok_or_else(|| {
+                CliError::NotFound(format!(
+                    "Elvanto returned no transposed chord chart for {target}"
+                ))
+            })?
         }
     };
 

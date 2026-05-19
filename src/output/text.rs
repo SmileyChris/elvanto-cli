@@ -52,7 +52,11 @@ pub fn write_song_curated<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<
                 None => k.starting.clone(),
             })
             .collect();
-        let keys_str = if keys.is_empty() { "\u{2014}".into() } else { keys.join(", ") };
+        let keys_str = if keys.is_empty() {
+            "\u{2014}".into()
+        } else {
+            keys.join(", ")
+        };
         writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
     }
     Ok(())
@@ -96,7 +100,11 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
                 None => k.starting.clone(),
             })
             .collect();
-        let keys_str = if keys.is_empty() { "\u{2014}".into() } else { keys.join(", ") };
+        let keys_str = if keys.is_empty() {
+            "\u{2014}".into()
+        } else {
+            keys.join(", ")
+        };
         writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
     }
     Ok(())

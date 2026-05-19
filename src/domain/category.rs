@@ -9,7 +9,10 @@ pub struct Category {
 
 impl From<RawCategory> for Category {
     fn from(raw: RawCategory) -> Self {
-        Self { id: raw.id, name: raw.name }
+        Self {
+            id: raw.id,
+            name: raw.name,
+        }
     }
 }
 
@@ -19,8 +22,17 @@ mod tests {
 
     #[test]
     fn from_raw_preserves_fields() {
-        let raw = RawCategory { id: "cat-1".into(), name: "Worship".into() };
+        let raw = RawCategory {
+            id: "cat-1".into(),
+            name: "Worship".into(),
+        };
         let cat: Category = raw.into();
-        assert_eq!(cat, Category { id: "cat-1".into(), name: "Worship".into() });
+        assert_eq!(
+            cat,
+            Category {
+                id: "cat-1".into(),
+                name: "Worship".into()
+            }
+        );
     }
 }

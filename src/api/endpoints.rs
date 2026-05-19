@@ -27,7 +27,11 @@ impl Client {
                 .await?;
             let got = resp.songs.song.len() as u32;
             out.extend(resp.songs.song);
-            let per_page = if resp.songs.per_page == 0 { SONGS_PAGE_SIZE } else { resp.songs.per_page };
+            let per_page = if resp.songs.per_page == 0 {
+                SONGS_PAGE_SIZE
+            } else {
+                resp.songs.per_page
+            };
             if got < per_page || (resp.songs.total > 0 && out.len() as u32 >= resp.songs.total) {
                 break;
             }
@@ -39,14 +43,17 @@ impl Client {
         Ok(out)
     }
 
-    pub async fn get_song_info(&self, id: &str, with_files: bool) -> Result<crate::api::raw::RawSongDetail, CliError> {
+    pub async fn get_song_info(
+        &self,
+        id: &str,
+        with_files: bool,
+    ) -> Result<crate::api::raw::RawSongDetail, CliError> {
         let body = if with_files {
             serde_json::json!({ "id": id, "files": 1 })
         } else {
             serde_json::json!({ "id": id })
         };
-        let resp: crate::api::raw::SongInfoResponse =
-            self.post("songs/getInfo", &body).await?;
+        let resp: crate::api::raw::SongInfoResponse = self.post("songs/getInfo", &body).await?;
         resp.songs
             .song
             .into_iter()
@@ -63,9 +70,8 @@ impl Client {
         if let Some(k) = chord_chart_key {
             body["chord_chart_key"] = serde_json::Value::String(k.to_string());
         }
-        let resp: crate::api::raw::ArrangementInfoResponse = self
-            .post("songs/arrangements/getInfo", &body)
-            .await?;
+        let resp: crate::api::raw::ArrangementInfoResponse =
+            self.post("songs/arrangements/getInfo", &body).await?;
         Ok(resp.arrangement)
     }
 }

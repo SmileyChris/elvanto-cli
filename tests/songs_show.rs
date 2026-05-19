@@ -121,7 +121,10 @@ async fn json_output_normalized() {
     assert_eq!(v["allow_downloads"], false);
     assert_eq!(v["arrangements"][0]["name"], "Default");
     assert_eq!(v["arrangements"][0]["keys"][0]["starting"], "G");
-    assert!(v.get("files").is_none(), "files omitted when --files not passed");
+    assert!(
+        v.get("files").is_none(),
+        "files omitted when --files not passed"
+    );
 }
 
 #[tokio::test]
@@ -129,7 +132,9 @@ async fn files_flag_with_json_requests_files_and_includes_them() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/getInfo.json"))
-        .and(body_partial_json(serde_json::json!({ "id": "s-1", "files": 1 })))
+        .and(body_partial_json(
+            serde_json::json!({ "id": "s-1", "files": 1 }),
+        ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(song_body(serde_json::json!({
                 "files": { "file": [ { "id": "f1", "filename": "lead.pdf" } ] }
