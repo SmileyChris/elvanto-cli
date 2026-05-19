@@ -4,8 +4,11 @@
 first-class use case is scriptable access to the Songs system, with output that
 is useful both to humans at a terminal and to programs in shell pipelines.
 
-This repository is currently in the documentation and design stage. The command
-names below describe the intended interface, not an implemented binary yet.
+The V1 read-only Songs surface (`auth check`, `songs categories`, `songs list`,
+`songs show`, `songs chart`, `songs lyrics`) is implemented. The "Proposed
+Command Shape" section below describes the original design surface, including
+mutation commands that are deferred beyond V1; see [docs/songs.md](docs/songs.md)
+for the actually-implemented V1 surface.
 
 ## Goals
 
