@@ -26,8 +26,22 @@ fn main() -> ExitCode {
 }
 
 async fn run(cli: Cli) -> Result<(), CliError> {
+    let api_key = std::env::var("ELVANTO_API_KEY")
+        .map_err(|_| CliError::Usage("ELVANTO_API_KEY is not set".into()))?;
+    let base_url = std::env::var("ELVANTO_BASE_URL")
+        .unwrap_or_else(|_| "https://api.elvanto.com/v1".to_string());
+    let client = api::Client::with_base_url(api_key, base_url)?;
+
+    if cli.verbose {
+        eprintln!("verbose: api_key={}", client.redacted_key());
+    }
+
     match cli.command {
-        Command::Auth { command: _ } => Err(CliError::Usage("auth check not implemented yet".into())),
-        Command::Songs { command: _ } => Err(CliError::Usage("songs commands not implemented yet".into())),
+        Command::Auth { command } => match command {
+            cli::AuthCommand::Check => commands::auth_check::run(&client).await,
+        },
+        Command::Songs { command: _ } => {
+            Err(CliError::Usage("songs commands not implemented yet".into()))
+        }
     }
 }

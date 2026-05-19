@@ -1,1 +1,1 @@
-// command modules added per-task
+pub mod auth_check;

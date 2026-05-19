@@ -5,9 +5,9 @@ use reqwest::Client as Http;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+#[allow(dead_code)]
 const DEFAULT_BASE_URL: &str = "https://api.elvanto.com/v1";
 
-#[allow(dead_code)]
 pub struct Client {
     http: Http,
     base_url: String,
@@ -15,6 +15,7 @@ pub struct Client {
 }
 
 impl Client {
+    #[allow(dead_code)]
     pub fn new(api_key: String) -> Result<Self, CliError> {
         Self::with_base_url(api_key, DEFAULT_BASE_URL.to_string())
     }
