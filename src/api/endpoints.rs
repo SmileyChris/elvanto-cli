@@ -53,4 +53,19 @@ impl Client {
             .next()
             .ok_or_else(|| CliError::NotFound(format!("song {id}")))
     }
+
+    pub async fn get_arrangement_info(
+        &self,
+        arrangement_id: &str,
+        chord_chart_key: Option<&str>,
+    ) -> Result<crate::api::raw::RawArrangement, CliError> {
+        let mut body = serde_json::json!({ "id": arrangement_id });
+        if let Some(k) = chord_chart_key {
+            body["chord_chart_key"] = serde_json::Value::String(k.to_string());
+        }
+        let resp: crate::api::raw::ArrangementInfoResponse = self
+            .post("songs/arrangements/getInfo", &body)
+            .await?;
+        Ok(resp.arrangement)
+    }
 }

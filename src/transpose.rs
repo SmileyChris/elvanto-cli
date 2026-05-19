@@ -3,14 +3,12 @@ use crate::error::CliError;
 const KEYS_SHARP: [&str; 12] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const KEYS_FLAT: [&str; 12] = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
-#[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Request {
     Named(String),
     Offset(i32),
 }
 
-#[allow(dead_code)]
 pub fn parse(input: &str) -> Result<Request, CliError> {
     let trimmed = input.trim();
     if trimmed.is_empty() {
@@ -28,7 +26,6 @@ pub fn parse(input: &str) -> Result<Request, CliError> {
     Ok(Request::Named(normalized))
 }
 
-#[allow(dead_code)]
 pub fn resolve(req: &Request, starting: &str) -> Result<String, CliError> {
     match req {
         Request::Named(k) => Ok(k.clone()),
