@@ -4,7 +4,6 @@ use chrono::{Datelike, NaiveDate};
 /// Returns (date_from, date_to) where date_to = `now` and date_from = `now` minus 6 months.
 /// Day-of-month is clamped to the last valid day of the resulting month
 /// (so e.g. Aug 31 → Feb 28 in a non-leap year).
-#[allow(dead_code)]
 pub fn default_window(now: NaiveDate) -> (NaiveDate, NaiveDate) {
     let from = subtract_months(now, 6);
     (from, now)
@@ -31,7 +30,6 @@ fn last_day_of_month(year: i32, month: u32) -> u32 {
     28
 }
 
-#[allow(dead_code)]
 pub fn parse_date(input: &str, flag_name: &str) -> Result<NaiveDate, CliError> {
     NaiveDate::parse_from_str(input, "%Y-%m-%d").map_err(|_| {
         CliError::Usage(format!(

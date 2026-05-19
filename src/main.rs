@@ -48,6 +48,9 @@ async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Auth { command } => match command {
             cli::AuthCommand::Check => commands::auth_check::run(&client).await,
         },
+        Command::Services { command } => match command {
+            cli::ServicesCommand::List(args) => commands::services_list::run(&client, args).await,
+        },
         Command::Songs { command } => match command {
             cli::SongsCommand::Categories(args) => {
                 commands::songs_categories::run(&client, args).await

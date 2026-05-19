@@ -76,7 +76,6 @@ impl Client {
         Ok(resp.arrangement)
     }
 
-    #[allow(dead_code)]
     pub async fn list_services(
         &self,
         date_from: &str,

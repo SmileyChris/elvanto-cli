@@ -18,6 +18,11 @@ pub enum Command {
         #[command(subcommand)]
         command: AuthCommand,
     },
+    /// Service (calendar event) commands.
+    Services {
+        #[command(subcommand)]
+        command: ServicesCommand,
+    },
     /// Worship song commands.
     Songs {
         #[command(subcommand)]
@@ -105,4 +110,23 @@ pub struct SongsLyricsArgs {
     /// Use this arrangement instead of the default.
     #[arg(long)]
     pub arrangement: Option<String>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ServicesCommand {
+    /// List services in a date range (defaults to the last 6 months).
+    List(ServicesListArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ServicesListArgs {
+    /// Inclusive start date (YYYY-MM-DD). Defaults to 6 months before --to.
+    #[arg(long, value_name = "YYYY-MM-DD")]
+    pub from: Option<String>,
+    /// Inclusive end date (YYYY-MM-DD). Defaults to today (local time).
+    #[arg(long, value_name = "YYYY-MM-DD")]
+    pub to: Option<String>,
+    /// Emit normalized JSON instead of text.
+    #[arg(long)]
+    pub json: bool,
 }

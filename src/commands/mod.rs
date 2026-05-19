@@ -1,4 +1,5 @@
 pub mod auth_check;
+pub mod services_list;
 pub mod songs_categories;
 pub mod songs_chart;
 pub mod songs_list;

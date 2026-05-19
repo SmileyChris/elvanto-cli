@@ -1,7 +1,6 @@
 use crate::api::raw::RawService;
 use serde::Serialize;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Service {
     pub id: String,
@@ -16,7 +15,6 @@ pub struct Service {
 
 impl Service {
     /// First 10 chars of the date string, i.e. "YYYY-MM-DD".
-    #[allow(dead_code)]
     pub fn date_short(&self) -> &str {
         if self.date.len() >= 10 {
             &self.date[..10]

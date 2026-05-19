@@ -1,4 +1,5 @@
 use crate::domain::category::{self, Category};
+use crate::domain::service::Service;
 use crate::domain::song::{SongDetail, SongSummary};
 use std::io::{self, Write};
 
@@ -113,6 +114,23 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
             keys.join(", ")
         };
         writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
+    }
+    Ok(())
+}
+
+pub fn write_services<W: Write>(w: &mut W, services: &[Service]) -> io::Result<()> {
+    for s in services {
+        let location = s.location.as_deref().unwrap_or("-");
+        writeln!(
+            w,
+            "{} | {} | {} | {} | {} | {}",
+            s.id,
+            s.date_short(),
+            s.name,
+            s.service_type,
+            location,
+            s.status,
+        )?;
     }
     Ok(())
 }
