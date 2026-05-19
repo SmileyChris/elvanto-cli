@@ -161,8 +161,10 @@ pub enum PeopleCommand {
 
 #[derive(Debug, Args)]
 pub struct PeopleListArgs {
-    /// Keep people whose department or sub-department matches (case-insensitive); repeat to OR-match.
-    #[arg(long, value_name = "NAME")]
+    /// Keep people whose department, sub-department, OR position id matches
+    /// (full UUID or short first-block). Repeat for OR across multiple ids.
+    /// Use `elvanto people departments` to look up ids.
+    #[arg(long, value_name = "ID")]
     pub department: Vec<String>,
     /// Print full UUIDs in text output (default uses short ids).
     #[arg(long)]
@@ -188,8 +190,10 @@ pub struct ServicesPeopleArgs {
     /// Hide unfilled positions (default: show every position).
     #[arg(long)]
     pub hide_unfilled: bool,
-    /// Keep rows where the department or sub-department matches (case-insensitive); repeat to OR-match.
-    #[arg(long, value_name = "NAME")]
+    /// Keep rows whose department, sub-department, OR position id matches
+    /// (full UUID or short first-block). Repeat for OR-match.
+    /// Use `elvanto people departments` to look up ids.
+    #[arg(long, value_name = "ID")]
     pub department: Vec<String>,
     /// Include each person's primary email in the output.
     #[arg(long)]

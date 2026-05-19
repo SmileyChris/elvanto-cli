@@ -171,8 +171,15 @@ pub fn write_departments<W: Write>(
         } else {
             category::short_id(&r.id)
         };
+        // Indent by depth so the tree is visually obvious in text mode.
+        let indent = match r.kind.as_str() {
+            "department" => "",
+            "sub_department" => "  ",
+            "position" => "    ",
+            _ => "",
+        };
         let parent = r.parent.as_deref().unwrap_or("-");
-        writeln!(w, "{} | {} | {}", id, r.name, parent)?;
+        writeln!(w, "{} | {}{} | {} | {}", id, indent, r.name, r.kind, parent)?;
     }
     Ok(())
 }

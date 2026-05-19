@@ -146,9 +146,9 @@ async fn people_list_department_filter_or_matches_dept_or_sub() {
             "people",
             "list",
             "--department",
-            "Vocals",
+            "sd-1", // Vocals sub-dept id
             "--department",
-            "Welcome Team",
+            "d-2", // Welcome Team dept id
         ])
         .assert()
         .success()
@@ -245,9 +245,64 @@ async fn people_departments_flat_unique_with_parent() {
         .clone();
     let text = String::from_utf8(out).unwrap();
     // 4 unique entries: Music Team, Vocals, Instruments, Welcome Team
+    // (the test fixtures don't include positions, so no position rows.)
     assert_eq!(text.lines().count(), 4);
-    assert!(text.contains("Music Team | -"));
-    assert!(text.contains("Vocals | Music Team"));
-    assert!(text.contains("Instruments | Music Team"));
-    assert!(text.contains("Welcome Team | -"));
+    assert!(text.contains("Music Team | department | -"));
+    assert!(text.contains("Vocals | sub_department | Music Team"));
+    assert!(text.contains("Instruments | sub_department | Music Team"));
+    assert!(text.contains("Welcome Team | department | -"));
+}
+
+#[tokio::test]
+async fn people_list_position_filter_matches_position_name() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/people/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(ok_page(vec![
+            // Alice: Vocals / Worship Leader
+            serde_json::json!({
+                "id": "11111111-aaaa-bbbb-cccc-111111111111",
+                "firstname": "Alice", "lastname": "Brown", "preferred_name": "",
+                "email": "alice@example.com", "status": "Active",
+                "departments": {
+                    "department": [{
+                        "id": "d-1", "name": "Music Team",
+                        "sub_departments": { "sub_department": [{
+                            "id": "sd-1", "name": "Vocals",
+                            "positions": { "position": [{ "id": "p-wl", "name": "Worship Leader" }] }
+                        }]}
+                    }]
+                }
+            }),
+            // Bob: Vocals / BV (not a worship leader)
+            serde_json::json!({
+                "id": "22222222-aaaa-bbbb-cccc-222222222222",
+                "firstname": "Bob", "lastname": "Carter", "preferred_name": "",
+                "email": "bob@example.com", "status": "Active",
+                "departments": {
+                    "department": [{
+                        "id": "d-1", "name": "Music Team",
+                        "sub_departments": { "sub_department": [{
+                            "id": "sd-1", "name": "Vocals",
+                            "positions": { "position": [{ "id": "p-bv", "name": "BV" }] }
+                        }]}
+                    }]
+                }
+            }),
+        ])))
+        .mount(&server)
+        .await;
+
+    let out = bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["people", "list", "--department", "p-wl"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(out).unwrap();
+    assert!(text.contains("Alice Brown"));
+    assert!(!text.contains("Bob Carter"));
 }

@@ -481,6 +481,32 @@ pub struct RawPersonSubDepartment {
     pub id: String,
     #[serde(default)]
     pub name: String,
+    #[serde(default, deserialize_with = "deserialize_person_positions")]
+    pub positions: RawPersonPositions,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonPositions {
+    #[serde(default)]
+    pub position: Vec<RawPersonPosition>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonPosition {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+}
+
+fn deserialize_person_positions<'de, D>(deserializer: D) -> Result<RawPersonPositions, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Array(_) | serde_json::Value::Null => Ok(RawPersonPositions::default()),
+        other => serde_json::from_value(other).map_err(de::Error::custom),
+    }
 }
 
 #[allow(dead_code)]
@@ -508,9 +534,15 @@ pub struct RawPositionList {
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawPosition {
     #[serde(default)]
+    pub department_id: String,
+    #[serde(default)]
     pub department_name: String,
     #[serde(default)]
+    pub sub_department_id: String,
+    #[serde(default)]
     pub sub_department_name: String,
+    #[serde(default)]
+    pub position_id: String,
     #[serde(default)]
     pub position_name: String,
     #[serde(default, deserialize_with = "deserialize_volunteers_field")]

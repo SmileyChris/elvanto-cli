@@ -1,12 +1,16 @@
 use crate::api::raw::RawService;
+use crate::domain::category::id_matches;
 use serde::Serialize;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct VolunteerRow {
     pub department: String,
+    pub department_id: String,
     pub sub_department: String,
+    pub sub_department_id: String,
     pub position: String,
+    pub position_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub person_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -18,12 +22,16 @@ pub struct VolunteerRow {
 }
 
 impl VolunteerRow {
+    /// Match by id (full UUID or short first-block) against department,
+    /// sub-department, or position id. Empty `filters` matches everything.
     pub fn matches_department(&self, filters: &[String]) -> bool {
         if filters.is_empty() {
             return true;
         }
         filters.iter().any(|f| {
-            self.department.eq_ignore_ascii_case(f) || self.sub_department.eq_ignore_ascii_case(f)
+            id_matches(&self.department_id, f)
+                || id_matches(&self.sub_department_id, f)
+                || id_matches(&self.position_id, f)
         })
     }
 
@@ -43,8 +51,11 @@ pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
             if position.volunteers.volunteer.is_empty() {
                 out.push(VolunteerRow {
                     department: position.department_name.clone(),
+                    department_id: position.department_id.clone(),
                     sub_department: position.sub_department_name.clone(),
+                    sub_department_id: position.sub_department_id.clone(),
                     position: position.position_name.clone(),
+                    position_id: position.position_id.clone(),
                     person_id: None,
                     name: None,
                     status: None,
@@ -55,8 +66,11 @@ pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
                     let name = v.person.display_name();
                     out.push(VolunteerRow {
                         department: position.department_name.clone(),
+                        department_id: position.department_id.clone(),
                         sub_department: position.sub_department_name.clone(),
+                        sub_department_id: position.sub_department_id.clone(),
                         position: position.position_name.clone(),
+                        position_id: position.position_id.clone(),
                         person_id: if v.person.id.is_empty() {
                             None
                         } else {

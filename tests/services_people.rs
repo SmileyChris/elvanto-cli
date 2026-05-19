@@ -23,11 +23,18 @@ fn ok_body(positions: Vec<serde_json::Value>) -> serde_json::Value {
     })
 }
 
+fn slug(s: &str) -> String {
+    s.to_ascii_lowercase().replace(' ', "-")
+}
+
 fn pos_filled(dept: &str, sub: &str, name: &str, person: &str, status: &str) -> serde_json::Value {
     let (first, last) = person.split_once(' ').unwrap_or((person, ""));
     serde_json::json!({
+        "department_id": format!("dept-{}", slug(dept)),
         "department_name": dept,
+        "sub_department_id": format!("sub-{}", slug(sub)),
         "sub_department_name": sub,
+        "position_id": format!("pos-{}", slug(name)),
         "position_name": name,
         "volunteers": {
             "volunteer": [{
@@ -45,8 +52,11 @@ fn pos_filled(dept: &str, sub: &str, name: &str, person: &str, status: &str) -> 
 
 fn pos_empty(dept: &str, sub: &str, name: &str) -> serde_json::Value {
     serde_json::json!({
+        "department_id": format!("dept-{}", slug(dept)),
         "department_name": dept,
+        "sub_department_id": format!("sub-{}", slug(sub)),
         "sub_department_name": sub,
+        "position_id": format!("pos-{}", slug(name)),
         "position_name": name,
         "volunteers": ""
     })
@@ -252,9 +262,9 @@ async fn department_filter_or_matches_department_or_sub_department() {
             "people",
             "svc-1",
             "--department",
-            "Service Leaders",
+            "sub-service-leaders", // Service Leaders sub-dept id
             "--department",
-            "Vocals",
+            "dept-vocals", // Vocals dept id
         ])
         .assert()
         .success()
