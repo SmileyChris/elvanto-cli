@@ -1,4 +1,3 @@
-pub mod auth_check;
 pub mod auth_clear;
 pub mod auth_login;
 pub mod auth_status;

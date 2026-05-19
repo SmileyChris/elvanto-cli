@@ -18,21 +18,25 @@ use std::process::ExitCode;
 fn main() -> ExitCode {
     dotenvy::dotenv().ok();
 
-    let args = auto_flags::apply(std::env::args().collect(), |k| std::env::var(k).ok());
-    let cli = Cli::parse_from(args);
+    let applied = auto_flags::apply(std::env::args().collect(), |k| std::env::var(k).ok());
+    let cli = Cli::parse_from(applied.argv);
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .expect("failed to build tokio runtime");
 
     let result = rt.block_on(run(cli));
-    match result {
+    let exit = match result {
         Ok(()) => ExitCode::SUCCESS,
-        Err(err) => {
+        Err(ref err) => {
             eprintln!("error: {err}");
             ExitCode::from(err.exit_code())
         }
+    };
+    if let Some(note) = applied.note {
+        eprintln!("{}", note.render());
     }
+    exit
 }
 
 fn resolve_api_key() -> Result<String, CliError> {
@@ -50,15 +54,13 @@ fn resolve_api_key() -> Result<String, CliError> {
 }
 
 async fn run(cli: Cli) -> Result<(), CliError> {
-    // auth login/clear/status manage their own credential resolution, so
-    // handle them before the global resolve step.
-    if let Command::Auth { command } = &cli.command {
-        match command {
-            cli::AuthCommand::Login(args) => return commands::auth_login::run(args.clone()),
-            cli::AuthCommand::Clear => return commands::auth_clear::run(),
-            cli::AuthCommand::Status => return commands::auth_status::run().await,
-            cli::AuthCommand::Check => {}
-        }
+    // auth subcommands all manage their own credential resolution.
+    if let Command::Auth { command } = cli.command {
+        return match command {
+            cli::AuthCommand::Login(args) => commands::auth_login::run(args),
+            cli::AuthCommand::Clear => commands::auth_clear::run(),
+            cli::AuthCommand::Status => commands::auth_status::run().await,
+        };
     }
 
     let api_key = resolve_api_key()?;
@@ -72,13 +74,7 @@ async fn run(cli: Cli) -> Result<(), CliError> {
     }
 
     match cli.command {
-        Command::Auth { command } => match command {
-            cli::AuthCommand::Check => commands::auth_check::run(&client).await,
-            // Handled above.
-            cli::AuthCommand::Login(_) | cli::AuthCommand::Clear | cli::AuthCommand::Status => {
-                unreachable!()
-            }
-        },
+        Command::Auth { .. } => unreachable!("handled above"),
         Command::People { command } => match command {
             cli::PeopleCommand::List(args) => commands::people_list::run(&client, args).await,
             cli::PeopleCommand::Departments(args) => {

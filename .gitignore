@@ -4,3 +4,7 @@ Cargo.lock.bak
 *.swp
 .idea/
 .vscode/
+
+# Zensical build output and cache
+/site
+/.zensical

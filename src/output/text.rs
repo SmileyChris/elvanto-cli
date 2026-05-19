@@ -1,12 +1,25 @@
+use crate::cli::IdMode;
 use crate::domain::category::{self, Category};
 use crate::domain::service::Service;
 use crate::domain::song::{SongDetail, SongSummary};
 use std::io::{self, Write};
 
-pub fn write_categories<W: Write>(w: &mut W, cats: &[Category], full_id: bool) -> io::Result<()> {
+/// Render the id column for `mode`, returning `None` when hidden so callers
+/// can drop the column entirely (rather than emit a blank `| ` cell).
+fn id_cell(full_id: &str, mode: IdMode) -> Option<&str> {
+    match mode {
+        IdMode::Hidden => None,
+        IdMode::Long => Some(full_id),
+        IdMode::Short => Some(category::short_id(full_id)),
+    }
+}
+
+pub fn write_categories<W: Write>(w: &mut W, cats: &[Category], mode: IdMode) -> io::Result<()> {
     for c in cats {
-        let id = if full_id { c.id.as_str() } else { c.short_id() };
-        writeln!(w, "{} | {}", id, c.name)?;
+        match id_cell(&c.id, mode) {
+            Some(id) => writeln!(w, "{} | {}", id, c.name)?,
+            None => writeln!(w, "{}", c.name)?,
+        }
     }
     Ok(())
 }
@@ -16,16 +29,14 @@ pub fn write_songs<W: Write>(
     songs: &[SongSummary],
     show_album: bool,
     show_ccli: bool,
-    full_id: bool,
+    mode: IdMode,
     show_last_used: bool,
 ) -> io::Result<()> {
     for s in songs {
-        let id = if full_id {
-            s.id.as_str()
-        } else {
-            category::short_id(&s.id)
-        };
-        write!(w, "{} | {} | {}", id, s.title, s.artist)?;
+        if let Some(id) = id_cell(&s.id, mode) {
+            write!(w, "{} | ", id)?;
+        }
+        write!(w, "{} | {}", s.title, s.artist)?;
         if show_album {
             write!(w, " | {}", s.album)?;
         }
@@ -122,18 +133,15 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
     Ok(())
 }
 
-pub fn write_services<W: Write>(w: &mut W, services: &[Service], full_id: bool) -> io::Result<()> {
+pub fn write_services<W: Write>(w: &mut W, services: &[Service], mode: IdMode) -> io::Result<()> {
     for s in services {
-        let id = if full_id {
-            s.id.as_str()
-        } else {
-            category::short_id(&s.id)
-        };
+        if let Some(id) = id_cell(&s.id, mode) {
+            write!(w, "{} | ", id)?;
+        }
         let location = s.location.as_deref().unwrap_or("-");
         writeln!(
             w,
-            "{} | {} | {} | {} | {} | {}",
-            id,
+            "{} | {} | {} | {} | {}",
             s.date_short(),
             s.name,
             s.service_type,
@@ -147,15 +155,13 @@ pub fn write_services<W: Write>(w: &mut W, services: &[Service], full_id: bool) 
 use crate::domain::person::{DepartmentRow, Person};
 use crate::domain::service::VolunteerRow;
 
-pub fn write_people<W: Write>(w: &mut W, people: &[Person], full_id: bool) -> io::Result<()> {
+pub fn write_people<W: Write>(w: &mut W, people: &[Person], mode: IdMode) -> io::Result<()> {
     for p in people {
-        let id = if full_id {
-            p.id.as_str()
-        } else {
-            category::short_id(&p.id)
-        };
+        if let Some(id) = id_cell(&p.id, mode) {
+            write!(w, "{} | ", id)?;
+        }
         let email = p.email.as_deref().unwrap_or("-");
-        writeln!(w, "{} | {} | {}", id, p.name, email)?;
+        writeln!(w, "{} | {}", p.name, email)?;
     }
     Ok(())
 }
@@ -163,14 +169,12 @@ pub fn write_people<W: Write>(w: &mut W, people: &[Person], full_id: bool) -> io
 pub fn write_departments<W: Write>(
     w: &mut W,
     rows: &[DepartmentRow],
-    full_id: bool,
+    mode: IdMode,
 ) -> io::Result<()> {
     for r in rows {
-        let id = if full_id {
-            r.id.as_str()
-        } else {
-            category::short_id(&r.id)
-        };
+        if let Some(id) = id_cell(&r.id, mode) {
+            write!(w, "{} | ", id)?;
+        }
         // Indent by depth so the tree is visually obvious in text mode.
         let indent = match r.kind.as_str() {
             "department" => "",
@@ -179,7 +183,7 @@ pub fn write_departments<W: Write>(
             _ => "",
         };
         let parent = r.parent.as_deref().unwrap_or("-");
-        writeln!(w, "{} | {}{} | {} | {}", id, indent, r.name, r.kind, parent)?;
+        writeln!(w, "{}{} | {} | {}", indent, r.name, r.kind, parent)?;
     }
     Ok(())
 }
@@ -188,6 +192,7 @@ pub fn write_service_people<W: Write>(
     w: &mut W,
     rows: &[VolunteerRow],
     show_email: bool,
+    mode: IdMode,
 ) -> io::Result<()> {
     for r in rows {
         let dept = if r.sub_department.is_empty() {
@@ -197,6 +202,14 @@ pub fn write_service_people<W: Write>(
         };
         let name = r.name.as_deref().unwrap_or("(unfilled)");
         let status = r.status.as_deref().unwrap_or("-");
+        if let Some(person_id) = r.person_id.as_deref() {
+            if let Some(id) = id_cell(person_id, mode) {
+                write!(w, "{} | ", id)?;
+            }
+        } else if mode != IdMode::Hidden {
+            // Unfilled row: keep the column aligned by emitting a `-` placeholder.
+            write!(w, "- | ")?;
+        }
         write!(w, "{} | {} | {} | {}", dept, r.position, name, status)?;
         if show_email {
             write!(w, " | {}", r.email.as_deref().unwrap_or("-"))?;

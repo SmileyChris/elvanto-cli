@@ -13,7 +13,7 @@ pub async fn run(client: &Client, args: SongsCategoriesArgs) -> Result<(), CliEr
     let res = if args.json {
         output::json::write_pretty(&mut lock, &cats)
     } else {
-        output::text::write_categories(&mut lock, &cats, args.full_id)
+        output::text::write_categories(&mut lock, &cats, args.id_mode)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

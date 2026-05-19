@@ -96,7 +96,7 @@ async fn full_id_flag_prints_full_uuid() {
     bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["services", "list", "--full-id"])
+        .args(["services", "list", "--id", "long"])
         .assert()
         .success()
         .stdout(contains(

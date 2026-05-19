@@ -47,7 +47,7 @@ async fn text_output_can_show_full_ids() {
     bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["songs", "categories", "--full-id"])
+        .args(["songs", "categories", "--id", "long"])
         .assert()
         .success()
         .stdout(

@@ -8,7 +8,8 @@ use assert_cmd::Command;
 pub fn bin() -> Command {
     let mut c = Command::cargo_bin("elvanto").unwrap();
     for var in [
-        "ELVANTO_AUTH_CHECK",
+        "ELVANTO_PEOPLE_DEPARTMENTS",
+        "ELVANTO_PEOPLE_LIST",
         "ELVANTO_SERVICES_LIST",
         "ELVANTO_SERVICES_PEOPLE",
         "ELVANTO_SONGS_CATEGORIES",

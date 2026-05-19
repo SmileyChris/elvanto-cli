@@ -21,7 +21,7 @@ fn temp_dir(label: &str) -> PathBuf {
 }
 
 #[tokio::test]
-async fn check_succeeds_with_valid_key() {
+async fn status_succeeds_with_valid_env_key() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/categories/getAll.json"))
@@ -35,14 +35,18 @@ async fn check_succeeds_with_valid_key() {
     bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["auth", "check"])
+        .args(["auth", "status"])
         .assert()
         .success()
-        .stdout(contains("auth: ok").and(contains("abcd…ghij")));
+        .stdout(
+            contains("source: env (ELVANTO_API_KEY)")
+                .and(contains("abcd…ghij"))
+                .and(contains("status: ok")),
+        );
 }
 
 #[tokio::test]
-async fn check_reads_api_key_from_dotenv() {
+async fn status_reads_api_key_from_dotenv() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/categories/getAll.json"))
@@ -67,14 +71,14 @@ async fn check_reads_api_key_from_dotenv() {
         .current_dir(dir)
         .env_remove("ELVANTO_API_KEY")
         .env_remove("ELVANTO_BASE_URL")
-        .args(["auth", "check"])
+        .args(["auth", "status"])
         .assert()
         .success()
-        .stdout(contains("auth: ok").and(contains("dote…key1")));
+        .stdout(contains("dote…key1").and(contains("status: ok")));
 }
 
 #[tokio::test]
-async fn check_fails_with_bad_key() {
+async fn status_fails_with_bad_key() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/songs/categories/getAll.json"))
@@ -88,24 +92,22 @@ async fn check_fails_with_bad_key() {
     bin()
         .env("ELVANTO_API_KEY", "wrongkeywrong")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["auth", "check"])
+        .args(["auth", "status"])
         .assert()
         .failure()
-        .code(1)
-        .stderr(contains("Elvanto returned code 121"));
+        .stdout(contains("status: invalid"));
 }
 
 #[test]
-fn check_fails_without_api_key() {
+fn status_reports_none_without_api_key() {
     let dir = temp_dir("no-dotenv-auth");
 
     bin()
         .current_dir(dir)
         .env_remove("ELVANTO_API_KEY")
         .env_remove("ELVANTO_BASE_URL")
-        .args(["auth", "check"])
+        .args(["auth", "status"])
         .assert()
         .failure()
-        .code(2)
-        .stderr(contains("no API key found"));
+        .stdout(contains("source: none").and(contains("no API key")));
 }

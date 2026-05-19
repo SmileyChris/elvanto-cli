@@ -236,9 +236,9 @@ async fn category_id_filter_matches_any_repeated_id() {
         .args([
             "songs",
             "list",
-            "--category-id",
+            "--category",
             "02b06b47",
-            "--category-id",
+            "--category",
             "90aee036-d5b7-11e5-aba7-06fb5fa8f77d",
         ])
         .assert()
@@ -288,7 +288,7 @@ async fn category_id_filter_applies_to_json_without_active_filter() {
     let out = bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["songs", "list", "--json", "--category-id", "c1"])
+        .args(["songs", "list", "--json", "--category", "c1"])
         .assert()
         .success()
         .get_output()
@@ -531,7 +531,7 @@ async fn full_id_flag_shows_full_song_ids_in_text_output() {
     bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["songs", "list", "--full-id"])
+        .args(["songs", "list", "--id", "long"])
         .assert()
         .success()
         .stdout(contains("s1-0000-0000-0000-000000000000 | Grace | Trad."));

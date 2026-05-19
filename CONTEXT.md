@@ -36,12 +36,12 @@ _Avoid_: Song number, license number
 ## V1 commands (read-only)
 
 ```
-elvanto auth check
-elvanto songs categories           [--json] [--full-id]
-elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--used-within DURATION] [--not-used-within DURATION] [--full-id]
+elvanto auth status
+elvanto songs categories           [--json] [--id short|long|hidden]
+elvanto songs list                  [--json] [--album] [--ccli] [--category ID ...] [--last-used] [--used-within DURATION] [--not-used-within DURATION] [--id short|long|hidden]
 elvanto songs show <id>             [--json] [--full] [--files]
-elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement NAME]
-elvanto songs lyrics <id>           [--arrangement NAME]
+elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement ID]
+elvanto songs lyrics <id>           [--arrangement ID]
 elvanto services list               [--json] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
 ```
 
@@ -51,10 +51,10 @@ Auth: `ELVANTO_API_KEY` env var (required, loaded from the shell or `.env`). No 
 
 ### Output defaults
 
-- `songs list` defaults to text: `id | title | artist` using short song ids. `--album` and `--ccli` add columns; `--full-id` prints full song UUIDs
-- `songs categories` uses first UUID blocks as short ids by default; `--full-id` prints full UUIDs
-- `songs list --category-id ID` filters client-side by category id; accepts full or short ids; repeat for OR matching
-- `songs list --used-within 6m --not-used-within 2w` filters client-side by service song usage; durations support `d`, `w`, `m`, `y`
+- `songs list` defaults to text: `id | title | artist` using short song ids. `--album`, `--ccli`, and `--last-used` add columns; `--id long` prints full song UUIDs, `--id hidden` drops the column
+- `songs categories` uses first UUID blocks as short ids by default; `--id long` prints full UUIDs, `--id hidden` drops the column
+- `songs list --category ID` filters client-side by category id; accepts full or short ids; repeat for OR matching
+- `songs list --used-within 6m --not-used-within 2w` filters client-side by service song usage and auto-adds the last-used column; durations support `d`, `w`, `m`, `y`
 - `songs list` filters to active songs by default in text mode, returns all in `--json`
 - `songs list` auto-fetches all pages by default
 - `songs chart` dumps chord chart text as-is
@@ -77,10 +77,12 @@ Auth: `ELVANTO_API_KEY` env var (required, loaded from the shell or `.env`). No 
 - Keep clear names as-is (`id`, `title`, `artist`, `status`, `name`)
 - Status values normalized to strings ("active" not `1`)
 
-### `auth check`
+### `auth status`
 
+- Reports key source (`env (ELVANTO_API_KEY)`, `keyring`, or `none`)
 - Shows redacted API key (first 4 + last 4 chars)
-- Exits 0 on valid, non-zero on invalid
+- Verifies by hitting `songs/categories/getAll`
+- Exits 0 on valid, non-zero on missing/invalid
 - No account name available via API key (Elvanto has no account info endpoint); OAuth users get username via `people/currentUser`
 
 ### Error output

@@ -1,0 +1,57 @@
+# Zensical configuration for the elvanto-cli documentation site.
+# Run `zensical serve` from the repo root to preview locally.
+
+[project]
+site_name = "elvanto-cli"
+site_description = "Rust command-line interface for the Elvanto API."
+site_author = "Chris Lincoln"
+copyright = "Copyright &copy; 2026 The elvanto-cli authors"
+
+# Explicit nav keeps internal directories (design/, docs/superpowers/) out
+# of the user-facing site even though `docs_dir` defaults to `docs/`.
+nav = [
+    { "Home" = "index.md" },
+    { "Getting started" = "getting-started.md" },
+    { "Concepts" = [
+        { "Authentication" = "concepts/auth.md" },
+        { "Auto-injected flags" = "concepts/env-flags.md" },
+        { "IDs and short IDs" = "concepts/ids.md" },
+    ] },
+    { "Commands" = [
+        { "auth" = "commands/auth.md" },
+        { "people" = "commands/people.md" },
+        { "services" = "commands/services.md" },
+        { "songs" = "commands/songs.md" },
+    ] },
+]
+
+[project.theme]
+language = "en"
+features = [
+    "announce.dismiss",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"

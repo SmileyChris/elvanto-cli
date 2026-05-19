@@ -4,11 +4,14 @@
 first-class use case is scriptable access to the Songs system, with output that
 is useful both to humans at a terminal and to programs in shell pipelines.
 
-The V1 read-only Songs surface (`auth check`, `songs categories`, `songs list`,
+The V1 read-only Songs surface (`auth status`, `songs categories`, `songs list`,
 `songs show`, `songs chart`, `songs lyrics`) is implemented. The "Proposed
 Command Shape" section below describes the original design surface, including
-mutation commands that are deferred beyond V1; see [docs/songs.md](docs/songs.md)
+mutation commands that are deferred beyond V1; see [design/songs.md](design/songs.md)
 for the actually-implemented V1 surface.
+
+User documentation lives under [`docs/`](docs/). Run `zensical serve` from the
+repo root to preview it locally.
 
 ## Goals
 
@@ -75,7 +78,7 @@ The installed binary should be named `elvanto` even if the crate remains named
 `elvanto-cli`.
 
 ```sh
-elvanto auth check
+elvanto auth status
 elvanto songs list --title "great" --output table
 elvanto songs list --artist "Chris Tomlin" --output json
 elvanto songs show <song-id> --files
@@ -149,7 +152,10 @@ stable unless a breaking release is explicitly documented.
 
 ## Documentation
 
-- [Songs system design](docs/songs.md)
+User docs live in [`docs/`](docs/) (built with [Zensical](https://zensical.org)).
+Internal design notes live in [`design/`](design/).
+
+- [Songs system design](design/songs.md)
 
 ## Building & running
 
@@ -158,9 +164,9 @@ The crate ships as a binary called `elvanto`.
 ````sh
 cargo build --release
 export ELVANTO_API_KEY="your-key"
-./target/release/elvanto auth check
+./target/release/elvanto auth status
 ./target/release/elvanto songs categories
-./target/release/elvanto songs list --album --ccli --category-id "short-or-full-category-id" --used-within 6m --not-used-within 2w
+./target/release/elvanto songs list --album --ccli --last-used --category "short-or-full-category-id" --used-within 6m --not-used-within 2w
 ./target/release/elvanto services list
 ````
 

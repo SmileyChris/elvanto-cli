@@ -1,4 +1,16 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
+
+/// How the id column is rendered in text-mode list output.
+/// `short` (default) prints the first dash-separated UUID block; `long` prints
+/// the full UUID; `hidden` omits the id column entirely. JSON output ignores
+/// this and always emits the full UUID.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum IdMode {
+    #[default]
+    Short,
+    Long,
+    Hidden,
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "elvanto", version, about = "CLI for the Elvanto API", long_about = None)]
@@ -41,8 +53,6 @@ pub enum Command {
 
 #[derive(Debug, Subcommand)]
 pub enum AuthCommand {
-    /// Verify the configured API key works.
-    Check,
     /// Store an API key in the OS keyring.
     Login(AuthLoginArgs),
     /// Remove the API key from the OS keyring.
@@ -77,9 +87,9 @@ pub struct SongsCategoriesArgs {
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
-    /// Show full category UUIDs in text output.
-    #[arg(long)]
-    pub full_id: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
 }
 
 #[derive(Debug, Args)]
@@ -93,12 +103,13 @@ pub struct SongsListArgs {
     /// Include the CCLI number column in text output.
     #[arg(long)]
     pub ccli: bool,
-    /// Keep songs assigned to this category id; repeat for OR matching.
-    #[arg(long = "category-id", value_name = "ID")]
+    /// Keep songs assigned to this category id (full UUID or short first-block);
+    /// repeat for OR matching. Use `elvanto songs categories` to look up ids.
+    #[arg(long = "category", value_name = "ID")]
     pub category_ids: Vec<String>,
-    /// Show full song UUIDs in text output.
-    #[arg(long)]
-    pub full_id: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
     /// Include the most recent service date in text output.
     #[arg(long)]
     pub last_used: bool,
@@ -130,16 +141,18 @@ pub struct SongsChartArgs {
     /// Transpose to a named key (C, F#, Bb) or a relative offset (-2, +3).
     #[arg(long)]
     pub transpose: Option<String>,
-    /// Use this arrangement instead of the default.
-    #[arg(long)]
+    /// Use this arrangement id (full UUID or short first-block) instead of
+    /// the default. Use `elvanto songs show <song>` to look up ids.
+    #[arg(long, value_name = "ID")]
     pub arrangement: Option<String>,
 }
 
 #[derive(Debug, Args)]
 pub struct SongsLyricsArgs {
     pub id: String,
-    /// Use this arrangement instead of the default.
-    #[arg(long)]
+    /// Use this arrangement id (full UUID or short first-block) instead of
+    /// the default. Use `elvanto songs show <song>` to look up ids.
+    #[arg(long, value_name = "ID")]
     pub arrangement: Option<String>,
 }
 
@@ -164,11 +177,11 @@ pub struct PeopleListArgs {
     /// Keep people whose department, sub-department, OR position id matches
     /// (full UUID or short first-block). Repeat for OR across multiple ids.
     /// Use `elvanto people departments` to look up ids.
-    #[arg(long, value_name = "ID")]
+    #[arg(long = "in", value_name = "ID")]
     pub department: Vec<String>,
-    /// Print full UUIDs in text output (default uses short ids).
-    #[arg(long)]
-    pub full_id: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
@@ -176,9 +189,9 @@ pub struct PeopleListArgs {
 
 #[derive(Debug, Args)]
 pub struct PeopleDepartmentsArgs {
-    /// Print full UUIDs in text output (default uses short ids).
-    #[arg(long)]
-    pub full_id: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
@@ -193,11 +206,14 @@ pub struct ServicesPeopleArgs {
     /// Keep rows whose department, sub-department, OR position id matches
     /// (full UUID or short first-block). Repeat for OR-match.
     /// Use `elvanto people departments` to look up ids.
-    #[arg(long, value_name = "ID")]
+    #[arg(long = "in", value_name = "ID")]
     pub department: Vec<String>,
     /// Include each person's primary email in the output.
     #[arg(long)]
     pub email: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
@@ -211,9 +227,9 @@ pub struct ServicesListArgs {
     /// Inclusive end date (YYYY-MM-DD). Defaults to today (local time).
     #[arg(long, value_name = "YYYY-MM-DD")]
     pub to: Option<String>,
-    /// Print full UUIDs in text output (default uses short ids).
-    #[arg(long)]
-    pub full_id: bool,
+    /// Id rendering: short (default), long, or hidden.
+    #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
+    pub id_mode: IdMode,
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,

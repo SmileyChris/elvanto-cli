@@ -97,6 +97,79 @@ async fn text_output_default_shows_filled_and_unfilled() {
 }
 
 #[tokio::test]
+async fn id_column_modes() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/services/getInfo.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "service": [{
+                "id": "svc-1", "name": "Sunday", "date": "2026-05-23 22:00:00",
+                "volunteers": { "plan": [{ "positions": { "position": [
+                    {
+                        "department_id": "d-1", "department_name": "Vocals",
+                        "sub_department_id": "", "sub_department_name": "",
+                        "position_id": "p-wl", "position_name": "Worship Leader",
+                        "volunteers": { "volunteer": [{
+                            "person": {
+                                "id": "1eb01e76-7a5d-4d02-a207-d75055645f14",
+                                "firstname": "Alice", "lastname": "B", "preferred_name": ""
+                            },
+                            "status": "Confirmed"
+                        }] }
+                    },
+                    {
+                        "department_id": "d-1", "department_name": "Vocals",
+                        "sub_department_id": "", "sub_department_name": "",
+                        "position_id": "p-bv", "position_name": "BV",
+                        "volunteers": ""
+                    }
+                ]}}]}
+            }]
+        })))
+        .mount(&server)
+        .await;
+    let mock_uri = server.uri();
+
+    // Default (short): id column shown as first uuid block; unfilled row shows `-`.
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", &mock_uri)
+        .args(["services", "people", "svc-1"])
+        .assert()
+        .success()
+        .stdout(
+            contains("1eb01e76 | Vocals | Worship Leader | Alice B | confirmed")
+                .and(contains("- | Vocals | BV | (unfilled) | -")),
+        );
+
+    // Long: full UUID.
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", &mock_uri)
+        .args(["services", "people", "svc-1", "--id", "long"])
+        .assert()
+        .success()
+        .stdout(contains(
+            "1eb01e76-7a5d-4d02-a207-d75055645f14 | Vocals | Worship Leader | Alice B | confirmed",
+        ));
+
+    // Hidden: id column dropped entirely.
+    let out = bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", &mock_uri)
+        .args(["services", "people", "svc-1", "--id", "hidden"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(out).unwrap();
+    assert!(text.contains("Vocals | Worship Leader | Alice B | confirmed"));
+    assert!(!text.contains("1eb01e76"));
+}
+
+#[tokio::test]
 async fn filled_flag_hides_unfilled() {
     let server = mock_server().await;
     Mock::given(method("POST"))
@@ -261,9 +334,9 @@ async fn department_filter_or_matches_department_or_sub_department() {
             "services",
             "people",
             "svc-1",
-            "--department",
+            "--in",
             "sub-service-leaders", // Service Leaders sub-dept id
-            "--department",
+            "--in",
             "dept-vocals", // Vocals dept id
         ])
         .assert()

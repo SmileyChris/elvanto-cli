@@ -7,12 +7,6 @@ pub struct Category {
     pub name: String,
 }
 
-impl Category {
-    pub fn short_id(&self) -> &str {
-        short_id(&self.id)
-    }
-}
-
 impl From<RawCategory> for Category {
     fn from(raw: RawCategory) -> Self {
         Self {

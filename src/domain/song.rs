@@ -12,6 +12,8 @@ pub struct SongSummary {
     pub album: String,
     pub ccli_number: String,
     pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_used: Option<String>,
 }
 
 impl From<RawSong> for SongSummary {
@@ -24,6 +26,7 @@ impl From<RawSong> for SongSummary {
             album: raw.album,
             ccli_number: raw.number,
             status,
+            last_used: None,
         }
     }
 }
@@ -155,5 +158,6 @@ mod tests {
         let v = serde_json::to_value(&s).unwrap();
         assert!(v.get("ccli_number").is_some());
         assert!(v.get("number").is_none());
+        assert!(v.get("last_used").is_none());
     }
 }

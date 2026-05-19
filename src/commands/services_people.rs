@@ -31,7 +31,7 @@ pub async fn run(client: &Client, args: ServicesPeopleArgs) -> Result<(), CliErr
     let res = if args.json {
         output::json::write_pretty(&mut lock, &rows)
     } else {
-        output::text::write_service_people(&mut lock, &rows, args.email)
+        output::text::write_service_people(&mut lock, &rows, args.email, args.id_mode)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

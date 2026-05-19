@@ -14,7 +14,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         album,
         ccli,
         category_ids,
-        full_id,
+        id_mode,
         last_used,
         used_within,
         not_used_within,
@@ -119,7 +119,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         output::json::write_pretty(&mut lock, &all)
     } else {
         let active: Vec<SongSummary> = all.into_iter().filter(|s| s.status == "active").collect();
-        output::text::write_songs(&mut lock, &active, album, ccli, full_id, show_last_used)
+        output::text::write_songs(&mut lock, &active, album, ccli, id_mode, show_last_used)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

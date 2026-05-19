@@ -13,7 +13,7 @@ pub async fn run(client: &Client, args: PeopleDepartmentsArgs) -> Result<(), Cli
     let res = if args.json {
         output::json::write_pretty(&mut lock, &rows)
     } else {
-        output::text::write_departments(&mut lock, &rows, args.full_id)
+        output::text::write_departments(&mut lock, &rows, args.id_mode)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

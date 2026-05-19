@@ -143,12 +143,8 @@ async fn people_list_department_filter_or_matches_dept_or_sub() {
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
         .args([
-            "people",
-            "list",
-            "--department",
-            "sd-1", // Vocals sub-dept id
-            "--department",
-            "d-2", // Welcome Team dept id
+            "people", "list", "--in", "sd-1", // Vocals sub-dept id
+            "--in", "d-2", // Welcome Team dept id
         ])
         .assert()
         .success()
@@ -296,7 +292,7 @@ async fn people_list_position_filter_matches_position_name() {
     let out = bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["people", "list", "--department", "p-wl"])
+        .args(["people", "list", "--in", "p-wl"])
         .assert()
         .success()
         .get_output()

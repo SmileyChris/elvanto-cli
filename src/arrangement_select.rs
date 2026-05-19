@@ -1,4 +1,5 @@
 use crate::domain::arrangement::Arrangement;
+use crate::domain::category::{id_matches, short_id};
 use crate::error::CliError;
 
 #[derive(Debug)]
@@ -16,14 +17,17 @@ pub fn select<'a>(
     }
 
     let chosen_idx = match requested {
-        Some(name) => arrangements
+        Some(id) => arrangements
             .iter()
-            .position(|a| a.name.eq_ignore_ascii_case(name))
+            .position(|a| id_matches(&a.id, id))
             .ok_or_else(|| {
-                let available: Vec<&str> = arrangements.iter().map(|a| a.name.as_str()).collect();
+                let available: Vec<String> = arrangements
+                    .iter()
+                    .map(|a| format!("{} ({})", short_id(&a.id), a.name))
+                    .collect();
                 CliError::Usage(format!(
-                    "arrangement {:?} not found; available: {}",
-                    name,
+                    "arrangement id {:?} not found; available: {}",
+                    id,
                     available.join(", ")
                 ))
             })?,
@@ -81,19 +85,44 @@ mod tests {
         assert_eq!(sel.chosen.name, "Acoustic");
     }
 
+    fn arr_with_id(id: &str, name: &str) -> Arrangement {
+        Arrangement {
+            id: id.into(),
+            name: name.into(),
+            sequence: None,
+            bpm: None,
+            duration: None,
+            keys: vec![],
+            lyrics: None,
+            chord_chart: None,
+        }
+    }
+
     #[test]
-    fn requested_match_case_insensitive() {
-        let list = vec![arr("Acoustic"), arr("Default")];
-        let sel = select(&list, Some("acoustic")).unwrap();
+    fn requested_match_by_short_id() {
+        let list = vec![
+            arr_with_id("a1b2c3d4-aaaa-bbbb-cccc-acoustic000", "Acoustic"),
+            arr_with_id("d5e6f7g8-aaaa-bbbb-cccc-default0000", "Default"),
+        ];
+        let sel = select(&list, Some("a1b2c3d4")).unwrap();
         assert_eq!(sel.chosen.name, "Acoustic");
     }
 
     #[test]
-    fn missing_request_errors_with_usage() {
-        let list = vec![arr("Default")];
-        match select(&list, Some("Live")) {
+    fn requested_match_by_full_id() {
+        let full = "a1b2c3d4-aaaa-bbbb-cccc-acoustic000";
+        let list = vec![arr_with_id(full, "Acoustic"), arr_with_id("d", "Default")];
+        let sel = select(&list, Some(full)).unwrap();
+        assert_eq!(sel.chosen.name, "Acoustic");
+    }
+
+    #[test]
+    fn missing_request_errors_with_usage_including_short_ids() {
+        let list = vec![arr_with_id("abcd1234-x-y-z-default", "Default")];
+        match select(&list, Some("zzzzzzzz")) {
             Err(CliError::Usage(msg)) => {
                 assert!(msg.contains("not found"));
+                assert!(msg.contains("abcd1234"));
                 assert!(msg.contains("Default"));
             }
             other => panic!("expected Usage error, got {other:?}"),
