@@ -51,6 +51,6 @@ impl Client {
             .song
             .into_iter()
             .next()
-            .ok_or_else(|| CliError::Api { code: 404, message: format!("song {id} not found") })
+            .ok_or_else(|| CliError::NotFound(format!("song {id}")))
     }
 }

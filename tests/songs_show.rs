@@ -170,5 +170,5 @@ async fn not_found_returns_exit_1() {
         .assert()
         .failure()
         .code(1)
-        .stderr(contains("song missing-id not found"));
+        .stderr(contains("not found: song missing-id"));
 }

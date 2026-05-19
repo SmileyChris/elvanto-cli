@@ -11,6 +11,9 @@ pub enum CliError {
     #[error("io: {0}")]
     Io(String),
 
+    #[error("not found: {0}")]
+    NotFound(String),
+
     #[error("{0}")]
     Usage(String),
 }
@@ -18,7 +21,7 @@ pub enum CliError {
 impl CliError {
     pub fn exit_code(&self) -> u8 {
         match self {
-            CliError::Api { .. } | CliError::Network(_) | CliError::Io(_) => 1,
+            CliError::Api { .. } | CliError::Network(_) | CliError::Io(_) | CliError::NotFound(_) => 1,
             CliError::Usage(_) => 2,
         }
     }
@@ -53,5 +56,12 @@ mod tests {
         let err = CliError::Io("broken pipe".into());
         assert_eq!(err.exit_code(), 1u8);
         assert_eq!(err.to_string(), "io: broken pipe");
+    }
+
+    #[test]
+    fn not_found_exits_1() {
+        let err = CliError::NotFound("song abc".into());
+        assert_eq!(err.exit_code(), 1u8);
+        assert_eq!(err.to_string(), "not found: song abc");
     }
 }

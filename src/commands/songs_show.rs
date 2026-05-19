@@ -5,6 +5,9 @@ use crate::error::CliError;
 use crate::output;
 
 pub async fn run(client: &Client, args: SongsShowArgs) -> Result<(), CliError> {
+    if args.files && !args.json {
+        eprintln!("warning: --files is only meaningful with --json; ignoring");
+    }
     let want_files = args.files && args.json;
     let raw = client.get_song_info(&args.id, want_files).await?;
     let detail: SongDetail = raw.into();

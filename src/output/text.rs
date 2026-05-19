@@ -88,8 +88,16 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
     }
     writeln!(w, "Arrangements:")?;
     for arr in &song.arrangements {
-        let keys: Vec<String> = arr.keys.iter().map(|k| k.starting.clone()).collect();
-        writeln!(w, "  - {} [{}]", arr.name, keys.join(", "))?;
+        let keys: Vec<String> = arr
+            .keys
+            .iter()
+            .map(|k| match &k.ending {
+                Some(e) => format!("{}\u{2192}{}", k.starting, e),
+                None => k.starting.clone(),
+            })
+            .collect();
+        let keys_str = if keys.is_empty() { "\u{2014}".into() } else { keys.join(", ") };
+        writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
     }
     Ok(())
 }
