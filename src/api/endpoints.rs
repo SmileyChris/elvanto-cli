@@ -116,6 +116,25 @@ impl Client {
         Ok(out)
     }
 
+    #[allow(dead_code)]
+    pub async fn get_service_info(
+        &self,
+        id: &str,
+        fields: &[&str],
+    ) -> Result<crate::api::raw::RawService, CliError> {
+        let body = if fields.is_empty() {
+            serde_json::json!({ "id": id })
+        } else {
+            serde_json::json!({ "id": id, "fields": fields })
+        };
+        let resp: crate::api::raw::ServiceInfoResponse =
+            self.post("services/getInfo", &body).await?;
+        resp.service
+            .into_iter()
+            .next()
+            .ok_or_else(|| CliError::NotFound(format!("service {id}")))
+    }
+
     pub async fn list_services_with_song_usage(
         &self,
         date_from: &str,

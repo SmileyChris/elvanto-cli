@@ -77,6 +77,9 @@ pub struct SongsListArgs {
     /// Show full song UUIDs in text output.
     #[arg(long)]
     pub full_id: bool,
+    /// Include the most recent service date in text output.
+    #[arg(long)]
+    pub last_used: bool,
     /// Keep songs used in a service within this duration (e.g. 6m, 2w).
     #[arg(long, value_name = "DURATION")]
     pub used_within: Option<String>,
@@ -122,6 +125,19 @@ pub struct SongsLyricsArgs {
 pub enum ServicesCommand {
     /// List services in a date range (defaults to the last 6 months).
     List(ServicesListArgs),
+    /// Show people assigned to a service (volunteers, by position).
+    People(ServicesPeopleArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ServicesPeopleArgs {
+    pub id: String,
+    /// Hide unfilled positions (default: show every position).
+    #[arg(long)]
+    pub filled: bool,
+    /// Emit normalized JSON instead of text.
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]

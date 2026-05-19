@@ -1,6 +1,70 @@
 use crate::api::raw::RawService;
 use serde::Serialize;
 
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct VolunteerRow {
+    pub department: String,
+    pub sub_department: String,
+    pub position: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub person_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+impl VolunteerRow {
+    #[allow(dead_code)]
+    pub fn is_filled(&self) -> bool {
+        self.person_id.is_some()
+    }
+}
+
+/// Flatten a service's volunteer tree into a flat list of rows.
+/// One row per volunteer; positions with no volunteers produce one row with
+/// `person_id`/`name`/`status` set to `None`.
+#[allow(dead_code)]
+pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
+    let mut out = Vec::new();
+    for plan in &raw.volunteers.plan {
+        for position in &plan.positions.position {
+            if position.volunteers.volunteer.is_empty() {
+                out.push(VolunteerRow {
+                    department: position.department_name.clone(),
+                    sub_department: position.sub_department_name.clone(),
+                    position: position.position_name.clone(),
+                    person_id: None,
+                    name: None,
+                    status: None,
+                });
+            } else {
+                for v in &position.volunteers.volunteer {
+                    let name = v.person.display_name();
+                    out.push(VolunteerRow {
+                        department: position.department_name.clone(),
+                        sub_department: position.sub_department_name.clone(),
+                        position: position.position_name.clone(),
+                        person_id: if v.person.id.is_empty() {
+                            None
+                        } else {
+                            Some(v.person.id.clone())
+                        },
+                        name: if name.is_empty() { None } else { Some(name) },
+                        status: if v.status.is_empty() {
+                            None
+                        } else {
+                            Some(v.status.to_ascii_lowercase())
+                        },
+                    });
+                }
+            }
+        }
+    }
+    out
+}
+
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Service {
     pub id: String,
@@ -26,10 +90,11 @@ impl Service {
 
 fn normalize_status(s: &str) -> String {
     let trimmed = s.trim();
-    if trimmed.is_empty() {
-        "unknown".to_string()
-    } else {
-        trimmed.to_ascii_lowercase()
+    match trimmed.to_ascii_lowercase().as_str() {
+        "" => "unknown".to_string(),
+        "1" => "published".to_string(),
+        "0" => "draft".to_string(),
+        status => status.to_string(),
     }
 }
 
@@ -79,6 +144,7 @@ mod tests {
             },
             songs: RawServiceSongList::default(),
             plans: RawServicePlanList::default(),
+            volunteers: Default::default(),
         }
     }
 
@@ -100,6 +166,19 @@ mod tests {
         r.status = "".into();
         let s: Service = r.into();
         assert_eq!(s.status, "unknown");
+    }
+
+    #[test]
+    fn from_raw_numeric_status_codes_become_labels() {
+        let mut r = raw();
+        r.status = "1".into();
+        let s: Service = r.into();
+        assert_eq!(s.status, "published");
+
+        let mut r = raw();
+        r.status = "0".into();
+        let s: Service = r.into();
+        assert_eq!(s.status, "draft");
     }
 
     #[test]
@@ -132,5 +211,82 @@ mod tests {
         assert_eq!(v["service_type"], "Sunday Service");
         assert_eq!(v["status"], "published");
         assert_eq!(v["location"], "Main");
+    }
+
+    #[test]
+    fn volunteer_rows_flatten_filled_and_unfilled_positions() {
+        let svc: RawService = serde_json::from_value(serde_json::json!({
+            "id": "svc-1",
+            "volunteers": {
+                "plan": [{
+                    "positions": {
+                        "position": [
+                            {
+                                "department_name": "Service Teams",
+                                "sub_department_name": "Service Leaders",
+                                "position_name": "Preaching",
+                                "volunteers": {
+                                    "volunteer": [{
+                                        "person": {
+                                            "id": "p-1",
+                                            "firstname": "Annedien",
+                                            "lastname": "Looyenga",
+                                            "preferred_name": ""
+                                        },
+                                        "status": "Confirmed"
+                                    }]
+                                }
+                            },
+                            {
+                                "department_name": "Service Teams",
+                                "sub_department_name": "Communion",
+                                "position_name": "Setup & Cleanup",
+                                "volunteers": ""
+                            }
+                        ]
+                    }
+                }]
+            }
+        }))
+        .unwrap();
+        let rows = volunteer_rows(&svc);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].position, "Preaching");
+        assert!(rows[0].is_filled());
+        assert_eq!(rows[0].name.as_deref(), Some("Annedien Looyenga"));
+        assert_eq!(rows[0].status.as_deref(), Some("confirmed"));
+        assert_eq!(rows[1].position, "Setup & Cleanup");
+        assert!(!rows[1].is_filled());
+        assert_eq!(rows[1].name, None);
+    }
+
+    #[test]
+    fn volunteer_rows_emits_one_row_per_volunteer() {
+        let svc: RawService = serde_json::from_value(serde_json::json!({
+            "id": "svc-1",
+            "volunteers": {
+                "plan": [{
+                    "positions": {
+                        "position": [{
+                            "department_name": "Sound",
+                            "sub_department_name": "FOH",
+                            "position_name": "Engineer",
+                            "volunteers": {
+                                "volunteer": [
+                                    {"person": {"id": "p-1", "firstname": "Alice", "lastname": "B", "preferred_name": ""}, "status": "Confirmed"},
+                                    {"person": {"id": "p-2", "firstname": "Bob", "lastname": "C", "preferred_name": ""}, "status": "Unconfirmed"}
+                                ]
+                            }
+                        }]
+                    }
+                }]
+            }
+        }))
+        .unwrap();
+        let rows = volunteer_rows(&svc);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name.as_deref(), Some("Alice B"));
+        assert_eq!(rows[1].name.as_deref(), Some("Bob C"));
+        assert_eq!(rows[1].status.as_deref(), Some("unconfirmed"));
     }
 }

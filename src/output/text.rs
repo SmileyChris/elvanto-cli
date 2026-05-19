@@ -17,6 +17,7 @@ pub fn write_songs<W: Write>(
     show_album: bool,
     show_ccli: bool,
     full_id: bool,
+    show_last_used: bool,
 ) -> io::Result<()> {
     for s in songs {
         let id = if full_id {
@@ -30,6 +31,9 @@ pub fn write_songs<W: Write>(
         }
         if show_ccli {
             write!(w, " | {}", s.ccli_number)?;
+        }
+        if show_last_used {
+            write!(w, " | {}", s.last_used.as_deref().unwrap_or("-"))?;
         }
         writeln!(w)?;
     }
@@ -131,6 +135,22 @@ pub fn write_services<W: Write>(w: &mut W, services: &[Service]) -> io::Result<(
             location,
             s.status,
         )?;
+    }
+    Ok(())
+}
+
+use crate::domain::service::VolunteerRow;
+
+pub fn write_service_people<W: Write>(w: &mut W, rows: &[VolunteerRow]) -> io::Result<()> {
+    for r in rows {
+        let dept = if r.sub_department.is_empty() {
+            r.department.as_str()
+        } else {
+            r.sub_department.as_str()
+        };
+        let name = r.name.as_deref().unwrap_or("(unfilled)");
+        let status = r.status.as_deref().unwrap_or("-");
+        writeln!(w, "{} | {} | {} | {}", dept, r.position, name, status)?;
     }
     Ok(())
 }

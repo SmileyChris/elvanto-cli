@@ -246,6 +246,22 @@ where
     }
 }
 
+fn deserialize_stringish<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Null => Ok(String::new()),
+        serde_json::Value::String(s) => Ok(s),
+        serde_json::Value::Number(n) => Ok(n.to_string()),
+        serde_json::Value::Bool(b) => Ok(b.to_string()),
+        other => Err(de::Error::custom(format!(
+            "expected string-compatible scalar, got {other}"
+        ))),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ServicesResponse {
     #[serde(default)]
@@ -277,7 +293,7 @@ pub struct RawService {
     pub name: String,
     #[serde(default)]
     pub description: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_stringish")]
     pub status: String,
     #[serde(default)]
     pub service_type: RawServiceType,
@@ -287,6 +303,9 @@ pub struct RawService {
     pub songs: RawServiceSongList,
     #[serde(default)]
     pub plans: RawServicePlanList,
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub volunteers: RawServiceVolunteers,
 }
 
 impl RawService {
@@ -360,6 +379,106 @@ pub struct RawServiceItem {
     pub song: serde_json::Value,
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct ServiceInfoResponse {
+    #[serde(default)]
+    pub service: Vec<RawService>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceVolunteers {
+    #[serde(default)]
+    pub plan: Vec<RawVolunteerPlan>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawVolunteerPlan {
+    #[serde(default)]
+    pub positions: RawPositionList,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPositionList {
+    #[serde(default)]
+    pub position: Vec<RawPosition>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPosition {
+    #[serde(default)]
+    pub department_name: String,
+    #[serde(default)]
+    pub sub_department_name: String,
+    #[serde(default)]
+    pub position_name: String,
+    #[serde(default, deserialize_with = "deserialize_volunteers_field")]
+    pub volunteers: RawVolunteersField,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawVolunteersField {
+    #[serde(default)]
+    pub volunteer: Vec<RawVolunteer>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawVolunteer {
+    #[serde(default)]
+    pub person: RawPerson,
+    #[serde(default)]
+    pub status: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPerson {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub firstname: String,
+    #[serde(default)]
+    pub lastname: String,
+    #[serde(default)]
+    pub preferred_name: String,
+}
+
+impl RawPerson {
+    #[allow(dead_code)]
+    pub fn display_name(&self) -> String {
+        let first = if self.preferred_name.is_empty() {
+            &self.firstname
+        } else {
+            &self.preferred_name
+        };
+        match (first.is_empty(), self.lastname.is_empty()) {
+            (true, true) => String::new(),
+            (false, true) => first.clone(),
+            (true, false) => self.lastname.clone(),
+            (false, false) => format!("{} {}", first, self.lastname),
+        }
+    }
+}
+
+/// Elvanto returns `volunteers: ""` (empty string) when no one is assigned,
+/// and `volunteers: { volunteer: [...] }` otherwise. Accept either.
+fn deserialize_volunteers_field<'de, D>(deserializer: D) -> Result<RawVolunteersField, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::String(_) | serde_json::Value::Null => Ok(RawVolunteersField::default()),
+        other => serde_json::from_value(other).map_err(de::Error::custom),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -410,5 +529,85 @@ mod tests {
         .unwrap();
 
         assert_eq!(service.song_ids(), vec!["sidebar-song", "plan-song"]);
+    }
+
+    #[test]
+    fn services_response_accepts_numeric_service_status() {
+        let resp: ServicesResponse = serde_json::from_value(json!({
+            "status": "ok",
+            "services": {
+                "service": [
+                    {
+                        "id": "svc-1",
+                        "date": "2026-05-19 09:30:00",
+                        "name": "Sunday Morning",
+                        "status": 1
+                    }
+                ]
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(resp.services.service[0].status, "1");
+    }
+
+    #[test]
+    fn position_volunteers_accepts_empty_string() {
+        let pos: RawPosition = serde_json::from_value(json!({
+            "department_name": "Service Teams",
+            "sub_department_name": "Communion",
+            "position_name": "Setup & Cleanup",
+            "volunteers": ""
+        }))
+        .unwrap();
+        assert!(pos.volunteers.volunteer.is_empty());
+    }
+
+    #[test]
+    fn position_volunteers_accepts_volunteer_object() {
+        let pos: RawPosition = serde_json::from_value(json!({
+            "department_name": "Service Teams",
+            "sub_department_name": "Service Leaders",
+            "position_name": "Preaching",
+            "volunteers": {
+                "volunteer": [
+                    {
+                        "person": {
+                            "id": "p-1",
+                            "firstname": "Annedien",
+                            "lastname": "Looyenga",
+                            "preferred_name": ""
+                        },
+                        "status": "Confirmed"
+                    }
+                ]
+            }
+        }))
+        .unwrap();
+        assert_eq!(pos.volunteers.volunteer.len(), 1);
+        assert_eq!(pos.volunteers.volunteer[0].person.firstname, "Annedien");
+        assert_eq!(pos.volunteers.volunteer[0].status, "Confirmed");
+    }
+
+    #[test]
+    fn person_display_name_prefers_preferred() {
+        let p = RawPerson {
+            id: "p1".into(),
+            firstname: "Robert".into(),
+            lastname: "Smith".into(),
+            preferred_name: "Bob".into(),
+        };
+        assert_eq!(p.display_name(), "Bob Smith");
+    }
+
+    #[test]
+    fn person_display_name_falls_back_to_firstname() {
+        let p = RawPerson {
+            id: "p1".into(),
+            firstname: "Robert".into(),
+            lastname: "Smith".into(),
+            preferred_name: String::new(),
+        };
+        assert_eq!(p.display_name(), "Robert Smith");
     }
 }
