@@ -1,5 +1,6 @@
 pub mod arrangement;
 pub mod category;
+pub mod person;
 pub mod service;
 pub mod song;
 

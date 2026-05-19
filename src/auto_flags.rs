@@ -12,7 +12,7 @@
 //! a second non-flag token forming a two-level path): `auth`, `services`,
 //! `songs`. Other tokens are treated as a single-level path.
 
-const KNOWN_GROUPS: &[&str] = &["auth", "services", "songs"];
+const KNOWN_GROUPS: &[&str] = &["auth", "people", "services", "songs"];
 
 /// Apply env-based auto-flag injection to `args` (which includes argv[0]).
 /// Returns the (possibly augmented) argv. Looks up env via `lookup`.

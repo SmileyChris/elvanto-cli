@@ -413,6 +413,74 @@ pub struct RawPersonRecord {
     pub id: String,
     #[serde(default)]
     pub email: String,
+    #[serde(default)]
+    pub firstname: String,
+    #[serde(default)]
+    pub preferred_name: String,
+    #[serde(default)]
+    pub lastname: String,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default, deserialize_with = "deserialize_person_departments")]
+    pub departments: RawPersonDepartments,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonDepartments {
+    #[serde(default)]
+    pub department: Vec<RawPersonDepartment>,
+}
+
+/// Elvanto returns `departments: []` for people with none, and
+/// `departments: { department: [...] }` for people with at least one. Normalise.
+fn deserialize_person_departments<'de, D>(deserializer: D) -> Result<RawPersonDepartments, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Array(_) | serde_json::Value::Null => {
+            Ok(RawPersonDepartments::default())
+        }
+        other => serde_json::from_value(other).map_err(de::Error::custom),
+    }
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonDepartment {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default, deserialize_with = "deserialize_person_sub_departments")]
+    pub sub_departments: RawPersonSubDepartments,
+}
+
+fn deserialize_person_sub_departments<'de, D>(
+    deserializer: D,
+) -> Result<RawPersonSubDepartments, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Array(_) | serde_json::Value::Null => {
+            Ok(RawPersonSubDepartments::default())
+        }
+        other => serde_json::from_value(other).map_err(de::Error::custom),
+    }
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonSubDepartments {
+    #[serde(default)]
+    pub sub_department: Vec<RawPersonSubDepartment>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawPersonSubDepartment {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
 }
 
 #[allow(dead_code)]

@@ -144,7 +144,38 @@ pub fn write_services<W: Write>(w: &mut W, services: &[Service], full_id: bool) 
     Ok(())
 }
 
+use crate::domain::person::{DepartmentRow, Person};
 use crate::domain::service::VolunteerRow;
+
+pub fn write_people<W: Write>(w: &mut W, people: &[Person], full_id: bool) -> io::Result<()> {
+    for p in people {
+        let id = if full_id {
+            p.id.as_str()
+        } else {
+            category::short_id(&p.id)
+        };
+        let email = p.email.as_deref().unwrap_or("-");
+        writeln!(w, "{} | {} | {}", id, p.name, email)?;
+    }
+    Ok(())
+}
+
+pub fn write_departments<W: Write>(
+    w: &mut W,
+    rows: &[DepartmentRow],
+    full_id: bool,
+) -> io::Result<()> {
+    for r in rows {
+        let id = if full_id {
+            r.id.as_str()
+        } else {
+            category::short_id(&r.id)
+        };
+        let parent = r.parent.as_deref().unwrap_or("-");
+        writeln!(w, "{} | {} | {}", id, r.name, parent)?;
+    }
+    Ok(())
+}
 
 pub fn write_service_people<W: Write>(
     w: &mut W,

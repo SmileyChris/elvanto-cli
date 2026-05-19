@@ -22,6 +22,11 @@ pub enum Command {
         #[command(subcommand)]
         command: AuthCommand,
     },
+    /// People (directory) commands.
+    People {
+        #[command(subcommand)]
+        command: PeopleCommand,
+    },
     /// Service (calendar event) commands.
     Services {
         #[command(subcommand)]
@@ -131,6 +136,37 @@ pub enum ServicesCommand {
     List(ServicesListArgs),
     /// Show people assigned to a service (volunteers, by position).
     People(ServicesPeopleArgs),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PeopleCommand {
+    /// List active people (id, name, email). Optionally filter by department.
+    List(PeopleListArgs),
+    /// List unique departments and sub-departments (flat).
+    Departments(PeopleDepartmentsArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PeopleListArgs {
+    /// Keep people whose department or sub-department matches (case-insensitive); repeat to OR-match.
+    #[arg(long, value_name = "NAME")]
+    pub department: Vec<String>,
+    /// Print full UUIDs in text output (default uses short ids).
+    #[arg(long)]
+    pub full_id: bool,
+    /// Emit normalized JSON instead of text.
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct PeopleDepartmentsArgs {
+    /// Print full UUIDs in text output (default uses short ids).
+    #[arg(long)]
+    pub full_id: bool,
+    /// Emit normalized JSON instead of text.
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]

@@ -116,6 +116,39 @@ impl Client {
         Ok(out)
     }
 
+    /// Fetch all people with the requested `fields` expansions. Paginates at page_size=1000.
+    pub async fn list_all_people(
+        &self,
+        fields: &[&str],
+    ) -> Result<Vec<crate::api::raw::RawPersonRecord>, CliError> {
+        const PEOPLE_PAGE_SIZE: u32 = 1000;
+        let mut out = Vec::new();
+        let mut page: u32 = 1;
+        loop {
+            let body = serde_json::json!({
+                "page": page,
+                "page_size": PEOPLE_PAGE_SIZE,
+                "fields": fields,
+            });
+            let resp: crate::api::raw::PeopleResponse = self.post("people/getAll", &body).await?;
+            let got = resp.people.person.len() as u32;
+            out.extend(resp.people.person);
+            let per_page = if resp.people.per_page == 0 {
+                PEOPLE_PAGE_SIZE
+            } else {
+                resp.people.per_page
+            };
+            if got < per_page || (resp.people.total > 0 && out.len() as u32 >= resp.people.total) {
+                break;
+            }
+            page += 1;
+            if page > 1000 {
+                break;
+            }
+        }
+        Ok(out)
+    }
+
     /// Fetch all people's id+email as a HashMap. Paginates at page_size=1000.
     pub async fn list_people_emails(
         &self,
