@@ -14,7 +14,7 @@ pub fn select<'a>(
     requested: Option<&str>,
 ) -> Result<Selection<'a>, CliError> {
     if arrangements.is_empty() {
-        return Err(CliError::Api { code: 0, message: "song has no arrangements".into() });
+        return Err(CliError::NotFound("song has no arrangements".into()));
     }
 
     let chosen_idx = match requested {
@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn empty_list_errors() {
-        assert!(matches!(select(&[], None), Err(CliError::Api { .. })));
+        assert!(matches!(select(&[], None), Err(CliError::NotFound(_))));
     }
 
     #[test]
