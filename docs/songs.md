@@ -6,8 +6,8 @@ mutations are deferred.
 ## V1 Command Surface
 
 ```
-elvanto songs categories           [--json]
-elvanto songs list                  [--json] [--album] [--ccli]
+elvanto songs categories           [--json] [--full-id]
+elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--full-id]
 elvanto songs show <id>             [--json] [--full] [--files]
 elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement NAME]
 elvanto songs lyrics <id>           [--arrangement NAME]
@@ -20,7 +20,7 @@ See [CONTEXT.md](../CONTEXT.md) for terminology and output defaults.
 | CLI command | Elvanto method | Key parameters |
 | --- | --- | --- |
 | `songs categories` | `songs/categories/getAll` | none |
-| `songs list` | `songs/getAll` | `page`, `page_size`, auto-filter `item=0` (text mode) |
+| `songs list` | `songs/getAll` | `page`, `page_size`, `item=0`; optional client-side `--category-id` filter |
 | `songs show <id>` | `songs/getInfo` | `id`, `files` |
 | `songs chart <id>` | `songs/arrangements/getAll` + `songs/arrangements/getInfo` | `song_id`, `chord_chart_key` |
 | `songs lyrics <id>` | `songs/arrangements/getAll` + `songs/arrangements/getInfo` | `song_id` |
@@ -34,22 +34,31 @@ output human-readable text only.
 
 ### `songs categories`
 
-Lists all song categories with id and name.
+Lists all song categories with id and name. Text output uses the first UUID
+block as a short id by default; pass `--full-id` to print full UUIDs. JSON output
+always keeps full ids.
 
 ```sh
 elvanto songs categories
+elvanto songs categories --full-id
 elvanto songs categories --json
 ```
 
 ### `songs list`
 
-Lists active songs. Default text output: `id | title | artist`. `--album` and
-`--ccli` flags add those columns. `--json` returns all songs (including
-non-active) as normalized JSON. Auto-fetches all pages.
+Lists active songs. Default text output: `id | title | artist`, using first UUID
+blocks as short song ids. `--full-id` prints full song UUIDs in text output.
+`--album` and `--ccli` flags add those columns. `--category-id` keeps songs
+assigned to that category id; it accepts either the full UUID or first-block
+short id. Repeat it to OR-match multiple categories. `--json` returns all
+matching songs (including non-active) as normalized JSON with full ids.
+Auto-fetches all pages.
 
 ```sh
 elvanto songs list
+elvanto songs list --full-id
 elvanto songs list --album --ccli
+elvanto songs list --category-id abc --category-id def
 elvanto songs list --json
 ```
 
@@ -107,7 +116,7 @@ Exit codes: 0 (success), 1 (API error), 2 (usage/config).
 
 ## Security
 
-- `ELVANTO_API_KEY` env var only, no flag for passing a key
+- `ELVANTO_API_KEY` env var only, loaded from the shell or `.env`; no flag for passing a key
 - Never print keys or auth headers
 - Redact credentials in `--verbose` output
 

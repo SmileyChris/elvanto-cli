@@ -119,6 +119,7 @@ mod tests {
             album: "".into(),
             number: "22025".into(),
             status,
+            categories: Default::default(),
         }
     }
 
@@ -133,6 +134,19 @@ mod tests {
     fn numeric_string_status_inactive() {
         let s: SongSummary = raw(json!("0")).into();
         assert_eq!(s.status, "archived");
+    }
+
+    #[test]
+    fn detail_status_active_string_is_active() {
+        let detail: SongDetail = RawSongDetail {
+            id: "s1".into(),
+            title: "Amazing Grace".into(),
+            status: json!("active"),
+            ..Default::default()
+        }
+        .into();
+
+        assert_eq!(detail.status, "active");
     }
 
     #[test]

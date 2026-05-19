@@ -3,6 +3,7 @@ use crate::arrangement_select;
 use crate::cli::SongsLyricsArgs;
 use crate::domain::song::SongDetail;
 use crate::error::CliError;
+use std::io::Write;
 
 pub async fn run(client: &Client, args: SongsLyricsArgs) -> Result<(), CliError> {
     let raw = client.get_song_info(&args.id, false).await?;
@@ -13,7 +14,11 @@ pub async fn run(client: &Client, args: SongsLyricsArgs) -> Result<(), CliError>
     let lyrics = sel.chosen.lyrics.as_deref().ok_or_else(|| {
         CliError::NotFound(format!("arrangement {:?} has no lyrics", sel.chosen.name))
     })?;
-    println!("{lyrics}");
+    {
+        let stdout = std::io::stdout();
+        let mut lock = stdout.lock();
+        writeln!(lock, "{lyrics}").map_err(|e| CliError::Io(format!("write error: {e}")))?;
+    }
 
     if !sel.others.is_empty() {
         let names: Vec<&str> = sel.others.iter().map(|a| a.name.as_str()).collect();

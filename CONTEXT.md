@@ -32,8 +32,8 @@ _Avoid_: Song number, license number
 
 ```
 elvanto auth check
-elvanto songs categories           [--json]
-elvanto songs list                  [--json] [--album] [--ccli]
+elvanto songs categories           [--json] [--full-id]
+elvanto songs list                  [--json] [--album] [--ccli] [--category-id ID ...] [--full-id]
 elvanto songs show <id>             [--json] [--full] [--files]
 elvanto songs chart <id>            [--transpose KEY|OFFSET] [--arrangement NAME]
 elvanto songs lyrics <id>           [--arrangement NAME]
@@ -41,11 +41,13 @@ elvanto songs lyrics <id>           [--arrangement NAME]
 
 Global flags: `--verbose`
 
-Auth: `ELVANTO_API_KEY` env var (required). No `--api-key` flag, no config file, no `--base-url` in V1.
+Auth: `ELVANTO_API_KEY` env var (required, loaded from the shell or `.env`). No `--api-key` flag, no config file, no `--base-url` in V1.
 
 ### Output defaults
 
-- `songs list` defaults to text: `id | title | artist`. `--album` and `--ccli` add those columns
+- `songs list` defaults to text: `id | title | artist` using short song ids. `--album` and `--ccli` add columns; `--full-id` prints full song UUIDs
+- `songs categories` uses first UUID blocks as short ids by default; `--full-id` prints full UUIDs
+- `songs list --category-id ID` filters client-side by category id; accepts full or short ids; repeat for OR matching
 - `songs list` filters to active songs by default in text mode, returns all in `--json`
 - `songs list` auto-fetches all pages by default
 - `songs chart` dumps chord chart text as-is

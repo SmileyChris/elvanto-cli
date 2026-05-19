@@ -53,6 +53,13 @@ Recommended local configuration:
 export ELVANTO_API_KEY="..."
 ```
 
+For local development, the CLI also loads a `.env` file from the current
+directory or a parent directory:
+
+```dotenv
+ELVANTO_API_KEY=...
+```
+
 Future config file location:
 
 ```text
@@ -152,7 +159,8 @@ The crate ships as a binary called `elvanto`.
 cargo build --release
 export ELVANTO_API_KEY="your-key"
 ./target/release/elvanto auth check
-./target/release/elvanto songs list --album --ccli
+./target/release/elvanto songs categories
+./target/release/elvanto songs list --album --ccli --category-id "short-or-full-category-id"
 ````
 
 For local development against a stub server:

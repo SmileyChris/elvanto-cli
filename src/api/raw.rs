@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{de, Deserialize, Deserializer};
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -41,14 +41,14 @@ pub struct SongsResponse {
 #[derive(Debug, Deserialize, Default)]
 pub struct SongList {
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub page: u32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub per_page: u32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub total: u32,
     #[allow(dead_code)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_u32ish")]
     pub on_this_page: u32,
     #[serde(default)]
     pub song: Vec<RawSong>,
@@ -69,6 +69,8 @@ pub struct RawSong {
     /// "1" = active, "0" = inactive (Elvanto serializes booleans as numeric strings here).
     #[serde(default)]
     pub status: serde_json::Value,
+    #[serde(default)]
+    pub categories: CategoryList,
 }
 
 impl RawSong {
@@ -207,8 +209,40 @@ pub fn truthy(v: &serde_json::Value) -> bool {
     match v {
         serde_json::Value::Bool(b) => *b,
         serde_json::Value::Number(n) => n.as_i64().map(|i| i != 0).unwrap_or(false),
-        serde_json::Value::String(s) => s == "1" || s.eq_ignore_ascii_case("true"),
+        serde_json::Value::String(s) => {
+            s == "1" || s.eq_ignore_ascii_case("true") || s.eq_ignore_ascii_case("active")
+        }
         _ => false,
+    }
+}
+
+fn deserialize_u32ish<'de, D>(deserializer: D) -> Result<u32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Null => Ok(0),
+        serde_json::Value::Number(n) => {
+            let value = n
+                .as_u64()
+                .ok_or_else(|| de::Error::custom(format!("expected unsigned integer, got {n}")))?;
+            u32::try_from(value)
+                .map_err(|_| de::Error::custom(format!("integer {value} is too large for u32")))
+        }
+        serde_json::Value::String(s) => {
+            let trimmed = s.trim();
+            if trimmed.is_empty() {
+                Ok(0)
+            } else {
+                trimmed.parse::<u32>().map_err(|_| {
+                    de::Error::custom(format!("expected numeric string for u32, got {s:?}"))
+                })
+            }
+        }
+        other => Err(de::Error::custom(format!(
+            "expected unsigned integer or numeric string, got {other}"
+        ))),
     }
 }
 
@@ -267,4 +301,30 @@ pub struct RawServiceLocation {
     pub id: String,
     #[serde(default)]
     pub name: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn songs_response_accepts_string_pagination_numbers() {
+        let resp: SongsResponse = serde_json::from_value(json!({
+            "status": "ok",
+            "songs": {
+                "page": "1",
+                "per_page": "100",
+                "total": "132",
+                "on_this_page": "100",
+                "song": []
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(resp.songs.page, 1);
+        assert_eq!(resp.songs.per_page, 100);
+        assert_eq!(resp.songs.total, 132);
+        assert_eq!(resp.songs.on_this_page, 100);
+    }
 }

@@ -20,6 +20,7 @@ impl Client {
                 .post(
                     "songs/getAll",
                     &serde_json::json!({
+                        "item": 0,
                         "page": page,
                         "page_size": SONGS_PAGE_SIZE,
                     }),
@@ -103,7 +104,9 @@ impl Client {
             } else {
                 resp.services.per_page
             };
-            if got < per_page || (resp.services.total > 0 && out.len() as u32 >= resp.services.total) {
+            if got < per_page
+                || (resp.services.total > 0 && out.len() as u32 >= resp.services.total)
+            {
                 break;
             }
             page += 1;

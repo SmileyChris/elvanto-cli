@@ -34,7 +34,7 @@ pub enum AuthCommand {
 #[derive(Debug, Subcommand)]
 pub enum SongsCommand {
     /// List song categories.
-    Categories(JsonOnly),
+    Categories(SongsCategoriesArgs),
     /// List active songs (all pages).
     List(SongsListArgs),
     /// Show a song by id.
@@ -46,10 +46,13 @@ pub enum SongsCommand {
 }
 
 #[derive(Debug, Args)]
-pub struct JsonOnly {
+pub struct SongsCategoriesArgs {
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
+    /// Show full category UUIDs in text output.
+    #[arg(long)]
+    pub full_id: bool,
 }
 
 #[derive(Debug, Args)]
@@ -63,6 +66,12 @@ pub struct SongsListArgs {
     /// Include the CCLI number column in text output.
     #[arg(long)]
     pub ccli: bool,
+    /// Keep songs assigned to this category id; repeat for OR matching.
+    #[arg(long = "category-id", value_name = "ID")]
+    pub category_ids: Vec<String>,
+    /// Show full song UUIDs in text output.
+    #[arg(long)]
+    pub full_id: bool,
 }
 
 #[derive(Debug, Args)]

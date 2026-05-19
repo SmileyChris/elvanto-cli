@@ -5,6 +5,7 @@ use crate::domain::arrangement::Arrangement;
 use crate::domain::song::SongDetail;
 use crate::error::CliError;
 use crate::transpose;
+use std::io::Write;
 
 pub async fn run(client: &Client, args: SongsChartArgs) -> Result<(), CliError> {
     let raw_song = client.get_song_info(&args.id, false).await?;
@@ -18,14 +19,19 @@ pub async fn run(client: &Client, args: SongsChartArgs) -> Result<(), CliError> 
         })?,
         Some(input) => {
             let req = transpose::parse(input)?;
-            let starting = chosen
-                .keys
-                .first()
-                .map(|k| k.starting.as_str())
-                .ok_or_else(|| {
-                    CliError::NotFound(format!("arrangement {:?} has no key", chosen.name))
-                })?;
-            let target = transpose::resolve(&req, starting)?;
+            let target = match req {
+                transpose::Request::Named(key) => key,
+                offset @ transpose::Request::Offset(_) => {
+                    let starting = chosen
+                        .keys
+                        .first()
+                        .map(|k| k.starting.as_str())
+                        .ok_or_else(|| {
+                            CliError::NotFound(format!("arrangement {:?} has no key", chosen.name))
+                        })?;
+                    transpose::resolve(&offset, starting)?
+                }
+            };
             let raw_arr = client
                 .get_arrangement_info(&chosen.id, Some(&target))
                 .await?;
@@ -38,7 +44,11 @@ pub async fn run(client: &Client, args: SongsChartArgs) -> Result<(), CliError> 
         }
     };
 
-    println!("{chart}");
+    {
+        let stdout = std::io::stdout();
+        let mut lock = stdout.lock();
+        writeln!(lock, "{chart}").map_err(|e| CliError::Io(format!("write error: {e}")))?;
+    }
 
     if !sel.others.is_empty() {
         let names: Vec<&str> = sel.others.iter().map(|a| a.name.as_str()).collect();

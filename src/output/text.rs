@@ -1,10 +1,11 @@
-use crate::domain::category::Category;
+use crate::domain::category::{self, Category};
 use crate::domain::song::{SongDetail, SongSummary};
 use std::io::{self, Write};
 
-pub fn write_categories<W: Write>(w: &mut W, cats: &[Category]) -> io::Result<()> {
+pub fn write_categories<W: Write>(w: &mut W, cats: &[Category], full_id: bool) -> io::Result<()> {
     for c in cats {
-        writeln!(w, "{} | {}", c.id, c.name)?;
+        let id = if full_id { c.id.as_str() } else { c.short_id() };
+        writeln!(w, "{} | {}", id, c.name)?;
     }
     Ok(())
 }
@@ -14,9 +15,15 @@ pub fn write_songs<W: Write>(
     songs: &[SongSummary],
     show_album: bool,
     show_ccli: bool,
+    full_id: bool,
 ) -> io::Result<()> {
     for s in songs {
-        write!(w, "{} | {} | {}", s.id, s.title, s.artist)?;
+        let id = if full_id {
+            s.id.as_str()
+        } else {
+            category::short_id(&s.id)
+        };
+        write!(w, "{} | {} | {}", id, s.title, s.artist)?;
         if show_album {
             write!(w, " | {}", s.album)?;
         }

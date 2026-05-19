@@ -1,10 +1,10 @@
 use crate::api::Client;
-use crate::cli::JsonOnly;
+use crate::cli::SongsCategoriesArgs;
 use crate::domain::category::Category;
 use crate::error::CliError;
 use crate::output;
 
-pub async fn run(client: &Client, args: JsonOnly) -> Result<(), CliError> {
+pub async fn run(client: &Client, args: SongsCategoriesArgs) -> Result<(), CliError> {
     let raw = client.list_categories().await?;
     let cats: Vec<Category> = raw.into_iter().map(Into::into).collect();
 
@@ -13,7 +13,7 @@ pub async fn run(client: &Client, args: JsonOnly) -> Result<(), CliError> {
     let res = if args.json {
         output::json::write_pretty(&mut lock, &cats)
     } else {
-        output::text::write_categories(&mut lock, &cats)
+        output::text::write_categories(&mut lock, &cats, args.full_id)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }
