@@ -75,7 +75,8 @@ impl Client {
         match value.get("status").and_then(|v| v.as_str()) {
             Some("ok") => serde_json::from_value(value)
                 .map_err(|e| CliError::Network(format!("decode error: {e}"))),
-            Some("error") => {
+            // Elvanto uses "error" or "fail" interchangeably for failure envelopes.
+            Some("error") | Some("fail") => {
                 let err: raw::ApiError = serde_json::from_value(
                     value
                         .get("error")
