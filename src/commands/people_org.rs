@@ -1,10 +1,10 @@
 use crate::api::Client;
-use crate::cli::PeopleDepartmentsArgs;
+use crate::cli::PeopleOrgArgs;
 use crate::domain::person::collect_departments;
 use crate::error::CliError;
 use crate::output;
 
-pub async fn run(client: &Client, args: PeopleDepartmentsArgs) -> Result<(), CliError> {
+pub async fn run(client: &Client, args: PeopleOrgArgs) -> Result<(), CliError> {
     let raws = client.list_all_people(&["departments"]).await?;
     let rows = collect_departments(&raws);
 
@@ -13,7 +13,7 @@ pub async fn run(client: &Client, args: PeopleDepartmentsArgs) -> Result<(), Cli
     let res = if args.json {
         output::json::write_pretty(&mut lock, &rows)
     } else {
-        output::text::write_departments(&mut lock, &rows, args.id_mode)
+        output::text::write_org_tree(&mut lock, &rows, args.id_mode)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

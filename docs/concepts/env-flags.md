@@ -18,7 +18,7 @@ after the subcommand path.
 | `elvanto services list` | `ELVANTO_SERVICES_LIST` |
 | `elvanto services people` | `ELVANTO_SERVICES_PEOPLE` |
 | `elvanto people list` | `ELVANTO_PEOPLE_LIST` |
-| `elvanto people departments` | `ELVANTO_PEOPLE_DEPARTMENTS` |
+| `elvanto people org` | `ELVANTO_PEOPLE_ORG` |
 
 (Anything two levels deep follows the same `ELVANTO_GROUP_LEAF` pattern.)
 

@@ -67,7 +67,7 @@ elvanto songs categories            # list song categories
 elvanto songs list --used-within 6m # songs used in the last 6 months
 elvanto services list               # services in the last 6 months
 elvanto people list                 # everyone active
-elvanto people departments          # full department / sub-department / position tree
+elvanto people org                  # full department / sub-department / position tree
 ```
 
 Every list command supports `--json` for structured output. Every list

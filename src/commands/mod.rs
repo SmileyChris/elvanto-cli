@@ -1,8 +1,8 @@
 pub mod auth_clear;
 pub mod auth_login;
 pub mod auth_status;
-pub mod people_departments;
 pub mod people_list;
+pub mod people_org;
 pub mod services_list;
 pub mod services_people;
 pub mod songs_categories;

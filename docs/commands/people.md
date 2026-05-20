@@ -8,7 +8,7 @@ tree, and filter at any level by id, name, or path.
 | Command | Purpose |
 | --- | --- |
 | [`people list`](#people-list) | List active people, optionally filtered by org-tree id |
-| [`people departments`](#people-departments) | Show the full department / sub-department / position tree |
+| [`people org`](#people-org) | Show the full department / sub-department / position tree |
 
 ---
 
@@ -85,38 +85,42 @@ Ambiguous matches (e.g. `--in Leader` when several positions are named
 "Leader") fail with a table of candidates. Typos get top-3 `Did you mean?`
 suggestions. See [Lookups](../concepts/lookups.md) for full semantics.
 
-## `people departments`
+## `people org`
 
 ```text
-elvanto people departments [--id short|long|hidden] [--json]
+elvanto people org [--id short|long|hidden] [--json]
 ```
 
-Prints the **full** department tree — every top-level department, its
+Prints the full organisational tree — every top-level department, its
 sub-departments, and every position under those — as a flat list in
-depth-first order, with indentation in the `name` column for visual hierarchy:
+depth-first order, with indentation in the name column conveying depth:
 
 ```
-d-1     | Music Team       | department     | -
-sd-1    |   Vocals         | sub_department | Music Team
-p-wl    |     Worship Leader | position     | Vocals
-p-bv    |     BV           | position       | Vocals
-sd-2    |   Instruments    | sub_department | Music Team
-d-2     | Welcome Team     | department     | -
+d7341d20 | Cafe Team
+d73545dc |   Cafe
+d7362b3d |     Barista
+d7382c2a |     Counter
+d738f481 |     Manager
+…
+d3d88873 | 7up
+dcb35040 |   7up Sunday (School Years 7 - 9)
+0f9cb778 |     Leader
 ```
 
-Columns: `id | name | kind | parent`. `kind` is one of `department`,
-`sub_department`, `position`. The `parent` for top-level departments is `-`.
+Two columns: `id | name`. JSON output (`--json`) keeps the full schema with
+`kind` (`department` / `sub_department` / `position`) and `parent` fields
+for programmatic consumers.
 
 ### Flags
 
 | Flag | Description |
 | --- | --- |
 | `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
-| `--json` | Emit normalized JSON. |
+| `--json` | Emit normalized JSON (includes `kind` and `parent`). |
 
 ### Notes
 
-- Departments are only discovered by walking `people/getAll` — the API does
+- The tree is only discovered by walking `people/getAll` — the API does
   not expose a dedicated list-all-departments endpoint. So this command
   always paginates through all people.
 - Output is deduplicated and sorted alphabetically within each level.

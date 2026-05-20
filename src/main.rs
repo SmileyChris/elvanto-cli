@@ -78,9 +78,7 @@ async fn run(cli: Cli) -> Result<(), CliError> {
         Command::Auth { .. } => unreachable!("handled above"),
         Command::People { command } => match command {
             cli::PeopleCommand::List(args) => commands::people_list::run(&client, args).await,
-            cli::PeopleCommand::Departments(args) => {
-                commands::people_departments::run(&client, args).await
-            }
+            cli::PeopleCommand::Org(args) => commands::people_org::run(&client, args).await,
         },
         Command::Services { command } => match command {
             cli::ServicesCommand::List(args) => commands::services_list::run(&client, args).await,

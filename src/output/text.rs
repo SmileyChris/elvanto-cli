@@ -166,24 +166,21 @@ pub fn write_people<W: Write>(w: &mut W, people: &[Person], mode: IdMode) -> io:
     Ok(())
 }
 
-pub fn write_departments<W: Write>(
-    w: &mut W,
-    rows: &[DepartmentRow],
-    mode: IdMode,
-) -> io::Result<()> {
+pub fn write_org_tree<W: Write>(w: &mut W, rows: &[DepartmentRow], mode: IdMode) -> io::Result<()> {
     for r in rows {
         if let Some(id) = id_cell(&r.id, mode) {
             write!(w, "{} | ", id)?;
         }
         // Indent by depth so the tree is visually obvious in text mode.
+        // `kind` and `parent` are dropped from text output (depth + line order
+        // already convey the same info); JSON still carries them.
         let indent = match r.kind.as_str() {
             "department" => "",
             "sub_department" => "  ",
             "position" => "    ",
             _ => "",
         };
-        let parent = r.parent.as_deref().unwrap_or("-");
-        writeln!(w, "{}{} | {} | {}", indent, r.name, r.kind, parent)?;
+        writeln!(w, "{}{}", indent, r.name)?;
     }
     Ok(())
 }

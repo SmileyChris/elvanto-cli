@@ -200,7 +200,7 @@ async fn people_list_json_includes_inactive_and_departments() {
 }
 
 #[tokio::test]
-async fn people_departments_flat_unique_with_parent() {
+async fn people_org_renders_indented_tree() {
     let server = mock_server().await;
     Mock::given(method("POST"))
         .and(path("/people/getAll.json"))
@@ -237,7 +237,7 @@ async fn people_departments_flat_unique_with_parent() {
     let out = bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["people", "departments"])
+        .args(["people", "org", "--id", "long"])
         .assert()
         .success()
         .get_output()
@@ -245,12 +245,58 @@ async fn people_departments_flat_unique_with_parent() {
         .clone();
     let text = String::from_utf8(out).unwrap();
     // 4 unique entries: Music Team, Vocals, Instruments, Welcome Team
-    // (the test fixtures don't include positions, so no position rows.)
+    // (text output drops the `kind` and `parent` columns; indentation
+    // conveys depth.)
     assert_eq!(text.lines().count(), 4);
-    assert!(text.contains("Music Team | department | -"));
-    assert!(text.contains("Vocals | sub_department | Music Team"));
-    assert!(text.contains("Instruments | sub_department | Music Team"));
-    assert!(text.contains("Welcome Team | department | -"));
+    // Top-level dept: no leading indent.
+    assert!(text.contains("d-1 | Music Team\n"));
+    // Sub-depts: 2-space indent under their parent.
+    assert!(text.contains("sd-1 |   Vocals\n"));
+    assert!(text.contains("sd-2 |   Instruments\n"));
+    assert!(text.contains("d-2 | Welcome Team\n"));
+    // kind / parent columns are gone from text.
+    assert!(!text.contains("| department |"));
+    assert!(!text.contains("| sub_department |"));
+}
+
+#[tokio::test]
+async fn people_org_json_keeps_kind_and_parent() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/people/getAll.json"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(ok_page(vec![person(
+                "11111111-aaaa-bbbb-cccc-111111111111",
+                "Alice",
+                "Brown",
+                "",
+                "Active",
+                serde_json::json!({
+                    "department": [
+                        dept("d-1", "Music Team", vec![("sd-1", "Vocals")])
+                    ]
+                }),
+            )])),
+        )
+        .mount(&server)
+        .await;
+
+    let out = bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["people", "org", "--json"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    let arr = v.as_array().unwrap();
+    assert_eq!(arr[0]["name"], "Music Team");
+    assert_eq!(arr[0]["kind"], "department");
+    assert_eq!(arr[1]["name"], "Vocals");
+    assert_eq!(arr[1]["kind"], "sub_department");
+    assert_eq!(arr[1]["parent"], "Music Team");
 }
 
 #[tokio::test]

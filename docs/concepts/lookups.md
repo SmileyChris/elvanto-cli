@@ -34,9 +34,10 @@ $ elvanto songs list
 45d9abe5 | Holy Forever | ...
 63b140bf | King of Kings | ...
 
-$ elvanto people departments
-04050825 | Instruments | sub_department | Music Team
-80be1d73 |   Setup & Cleanup | position | Communion
+$ elvanto people org
+d7341d20 | Cafe Team
+d73545dc |   Cafe
+d7362b3d |     Barista
 ```
 
 Every list command takes `--id short|long|hidden`:
@@ -85,7 +86,7 @@ ambiguous query.
 ## Ambiguity is a feature
 
 When a name matches more than one node, the resolver fails with a table —
-which doubles as a `people departments` invocation pre-filtered to your
+which doubles as a `people org` invocation pre-filtered to your
 query:
 
 ```

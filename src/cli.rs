@@ -167,10 +167,10 @@ pub enum ServicesCommand {
 
 #[derive(Debug, Subcommand)]
 pub enum PeopleCommand {
-    /// List active people (id, name, email). Optionally filter by department.
+    /// List active people (id, name, email). Optionally filter by org tree.
     List(PeopleListArgs),
-    /// List unique departments and sub-departments (flat).
-    Departments(PeopleDepartmentsArgs),
+    /// Show the organisational tree (departments, sub-departments, positions).
+    Org(PeopleOrgArgs),
 }
 
 #[derive(Debug, Args)]
@@ -190,7 +190,7 @@ pub struct PeopleListArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct PeopleDepartmentsArgs {
+pub struct PeopleOrgArgs {
     /// Id rendering: short (default), long, or hidden.
     #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
     pub id_mode: IdMode,
