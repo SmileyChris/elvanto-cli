@@ -1,0 +1,61 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  # Lets you re-run a release build manually if a workflow run failed.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          # Cross-compile the Intel build from the arm64 runner — GitHub
+          # retired the macos-13 (Intel) runner image, so a native x86_64
+          # build queues forever. The Apple toolchain handles the cross.
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # The Linux keyring backend (`linux-native`) links against libdbus.
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
+
+      - name: Build & upload archive
+        uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: elvanto
+          target: ${{ matrix.target }}
+          # tar.gz on unix, .zip on windows — defaults from the action.
+          archive: $bin-$tag-$target
+          # On tag push, github.ref is already refs/tags/vX.Y.Z. On a
+          # workflow_dispatch re-run, the input is just "vX.Y.Z" so we
+          # synthesize the full ref the action expects.
+          ref: ${{ github.event.inputs.tag && format('refs/tags/{0}', github.event.inputs.tag) || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
