@@ -20,20 +20,22 @@ published on each [release](https://github.com/SmileyChris/elvanto-cli/releases)
 Pick the archive for your platform from the latest release, extract it,
 and drop the `elvanto` binary somewhere on your `PATH`.
 
-Linux / macOS one-liner (replace the URL with the archive for your platform):
+Linux / macOS one-liner (sub in the latest version and your target triple):
 
 ```sh
-curl -L https://github.com/SmileyChris/elvanto-cli/releases/latest/download/elvanto-v0.1.0-x86_64-unknown-linux-gnu.tar.gz \
+VER=v0.1.0
+TARGET=x86_64-unknown-linux-gnu   # or aarch64-apple-darwin, x86_64-apple-darwin
+curl -L "https://github.com/SmileyChris/elvanto-cli/releases/download/${VER}/elvanto-${VER}-${TARGET}.tar.gz" \
   | tar -xz -C ~/.local/bin
 elvanto --version
 ```
 
-| Platform | Archive |
+| Platform | Target triple |
 | --- | --- |
-| Linux x86_64 | `elvanto-vX.Y.Z-x86_64-unknown-linux-gnu.tar.gz` |
-| macOS arm64 (Apple Silicon) | `elvanto-vX.Y.Z-aarch64-apple-darwin.tar.gz` |
-| macOS x86_64 (Intel) | `elvanto-vX.Y.Z-x86_64-apple-darwin.tar.gz` |
-| Windows x86_64 | `elvanto-vX.Y.Z-x86_64-pc-windows-msvc.zip` |
+| Linux x86_64 | `x86_64-unknown-linux-gnu` |
+| macOS arm64 (Apple Silicon) | `aarch64-apple-darwin` |
+| macOS x86_64 (Intel) | `x86_64-apple-darwin` |
+| Windows x86_64 | `x86_64-pc-windows-msvc` (`.zip`, not `.tar.gz`) |
 
 ### Option 2: build from source
 
