@@ -4,8 +4,11 @@
 [project]
 site_name = "elvanto-cli"
 site_description = "Rust command-line interface for the Elvanto API."
-site_author = "Chris Lincoln"
+site_author = "Chris Beaven"
 site_url = "https://smileychris.github.io/elvanto-cli/"
+repo_url = "https://github.com/SmileyChris/elvanto-cli"
+repo_name = "SmileyChris/elvanto-cli"
+edit_uri = "edit/main/docs/"
 copyright = "Copyright &copy; 2026 The elvanto-cli authors"
 
 # Explicit nav keeps internal directories (design/, docs/superpowers/) out
@@ -30,6 +33,8 @@ nav = [
 language = "en"
 features = [
     "announce.dismiss",
+    "content.action.edit",
+    "content.action.view",
     "content.code.annotate",
     "content.code.copy",
     "content.code.select",
