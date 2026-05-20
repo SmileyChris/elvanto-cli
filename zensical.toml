@@ -5,6 +5,7 @@
 site_name = "elvanto-cli"
 site_description = "Rust command-line interface for the Elvanto API."
 site_author = "Chris Lincoln"
+site_url = "https://smileychris.github.io/elvanto-cli/"
 copyright = "Copyright &copy; 2026 The elvanto-cli authors"
 
 # Explicit nav keeps internal directories (design/, docs/superpowers/) out
