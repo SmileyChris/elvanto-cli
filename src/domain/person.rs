@@ -1,5 +1,6 @@
 use crate::api::raw::RawPersonRecord;
 use crate::domain::category::id_matches;
+use crate::resolve::{self, NodeKind, TreeNode};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -135,6 +136,47 @@ pub struct DepartmentRow {
     pub kind: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<String>,
+}
+
+/// Flatten the org tree across all people into `TreeNode`s for resolver use.
+/// One node per department / sub-department / position, deduped by id.
+pub fn person_tree(people: &[Person]) -> Vec<TreeNode> {
+    let mut out: Vec<TreeNode> = Vec::new();
+    for p in people {
+        for d in &p.departments {
+            if !d.department_id.is_empty() {
+                out.push(TreeNode {
+                    id: d.department_id.clone(),
+                    path: vec![d.department.clone()],
+                    kind: NodeKind::Department,
+                });
+            }
+            if let (Some(sid), Some(sname)) = (&d.sub_department_id, &d.sub_department) {
+                if !sid.is_empty() {
+                    out.push(TreeNode {
+                        id: sid.clone(),
+                        path: vec![d.department.clone(), sname.clone()],
+                        kind: NodeKind::SubDepartment,
+                    });
+                }
+            }
+            if let (Some(pid), Some(pname)) = (&d.position_id, &d.position) {
+                if !pid.is_empty() {
+                    let mut path = vec![d.department.clone()];
+                    if let Some(sname) = &d.sub_department {
+                        path.push(sname.clone());
+                    }
+                    path.push(pname.clone());
+                    out.push(TreeNode {
+                        id: pid.clone(),
+                        path,
+                        kind: NodeKind::Position,
+                    });
+                }
+            }
+        }
+    }
+    resolve::dedupe(out)
 }
 
 pub fn collect_departments(people: &[RawPersonRecord]) -> Vec<DepartmentRow> {

@@ -335,9 +335,9 @@ async fn department_filter_or_matches_department_or_sub_department() {
             "people",
             "svc-1",
             "--in",
-            "sub-service-leaders", // Service Leaders sub-dept id
+            "Service Leaders", // sub-dept name → resolves to sub-service-leaders
             "--in",
-            "dept-vocals", // Vocals dept id
+            "Vocals", // dept name → resolves to dept-vocals
         ])
         .assert()
         .success()

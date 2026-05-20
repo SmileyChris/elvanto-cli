@@ -309,6 +309,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shlex",
+ "strsim",
  "thiserror 1.0.69",
  "tokio",
  "wiremock",

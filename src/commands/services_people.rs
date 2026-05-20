@@ -3,16 +3,19 @@ use crate::api::Client;
 use crate::cli::ServicesPeopleArgs;
 use crate::date_window::default_window;
 use crate::domain::category::short_id;
-use crate::domain::service::{volunteer_rows, VolunteerRow};
+use crate::domain::service::{volunteer_rows, volunteer_tree, VolunteerRow};
 use crate::error::CliError;
 use crate::output;
+use crate::resolve;
 use chrono::Local;
 
 pub async fn run(client: &Client, args: ServicesPeopleArgs) -> Result<(), CliError> {
     let raw = fetch_with_short_id_fallback(client, &args.id).await?;
     let mut rows = volunteer_rows(&raw);
     if !args.department.is_empty() {
-        rows.retain(|r| r.matches_department(&args.department));
+        let tree = volunteer_tree(&rows);
+        let resolved = resolve::resolve_all(&args.department, &tree)?;
+        rows.retain(|r| r.matches_department(&resolved));
     }
     if args.hide_unfilled {
         rows.retain(VolunteerRow::is_filled);

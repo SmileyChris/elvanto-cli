@@ -1,7 +1,7 @@
 # `elvanto people`
 
 Directory commands: list people, explore the department/sub-department/position
-tree, and filter by id at any level.
+tree, and filter at any level by id, name, or path.
 
 ## Subcommands
 
@@ -53,33 +53,37 @@ entries. Each entry has up to three levels populated:
 
 | Flag | Description |
 | --- | --- |
-| `--in <ID>` | Keep people whose department, sub-department, **or** position id matches the given id. Repeat for OR across multiple ids. Accepts full UUIDs or short ids. |
-| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [IDs](../concepts/ids.md). |
+| `--in <ID\|NAME\|PATH>` | Keep people whose department, sub-department, **or** position matches. Accepts a full UUID, short first-block, name (`Vocals`), or path (`Music Team/Vocals`). Repeat for OR. See [Lookups](../concepts/lookups.md). |
+| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON instead of text. JSON output ignores `--id` and always uses full UUIDs. |
 
 ### Filtering by org tree
 
-The `--in` flag matches **by id at every level of the tree** (department,
-sub-department, or position). There is intentionally only one filter flag —
-no separate `--sub-department` or `--position`. Real-world Elvanto
-departments often share names ("Volunteer", "Set-Up", "Leader") at different
-levels, so id-based filtering is the only way to be unambiguous.
+`--in` matches at every level of the org tree. Pick whichever form is most
+ergonomic — id, name, or path:
 
 ```sh
-# By top-level department id
-elvanto people list --in d-1-...
-
-# By sub-department id (e.g. "Vocals")
+# By short id (stable for scripts and .env files)
 elvanto people list --in 03fa8320
 
-# By position id (e.g. "Worship Leader")
-elvanto people list --in <position-id>
+# By name (case-insensitive; errors if ambiguous)
+elvanto people list --in Vocals
+elvanto people list --in "Worship Leader"
 
-# Multiple OR-matched ids
-elvanto people list --in bf40484c --in 03fa8320
+# By path — disambiguates same-name nodes
+elvanto people list --in "Music Team/Vocals"
+elvanto people list --in "Music Team/Vocals/Leader"
+
+# Parent match includes the whole subtree
+elvanto people list --in "Music Team"   # everyone in Music Team or any child
+
+# Multiple OR-matched lookups
+elvanto people list --in Vocals --in "Welcome Team"
 ```
 
-Use [`people departments`](#people-departments) to look up the ids.
+Ambiguous matches (e.g. `--in Leader` when several positions are named
+"Leader") fail with a table of candidates. Typos get top-3 `Did you mean?`
+suggestions. See [Lookups](../concepts/lookups.md) for full semantics.
 
 ## `people departments`
 
@@ -107,7 +111,7 @@ Columns: `id | name | kind | parent`. `kind` is one of `department`,
 
 | Flag | Description |
 | --- | --- |
-| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [IDs](../concepts/ids.md). |
+| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON. |
 
 ### Notes

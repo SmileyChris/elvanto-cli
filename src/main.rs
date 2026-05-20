@@ -8,6 +8,7 @@ mod domain;
 mod error;
 mod keyring_store;
 mod output;
+mod resolve;
 mod transpose;
 
 use clap::Parser;

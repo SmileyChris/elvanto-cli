@@ -1,4 +1,5 @@
 use crate::api::raw::RawCategory;
+use crate::resolve::{self, NodeKind, TreeNode};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -14,6 +15,19 @@ impl From<RawCategory> for Category {
             name: raw.name,
         }
     }
+}
+
+pub fn category_tree(cats: &[Category]) -> Vec<TreeNode> {
+    let out: Vec<TreeNode> = cats
+        .iter()
+        .filter(|c| !c.id.is_empty())
+        .map(|c| TreeNode {
+            id: c.id.clone(),
+            path: vec![c.name.clone()],
+            kind: NodeKind::Category,
+        })
+        .collect();
+    resolve::dedupe(out)
 }
 
 pub fn short_id(id: &str) -> &str {

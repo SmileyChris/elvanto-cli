@@ -1,5 +1,6 @@
 use crate::api::raw::RawService;
 use crate::domain::category::id_matches;
+use crate::resolve::{self, NodeKind, TreeNode};
 use serde::Serialize;
 
 #[allow(dead_code)]
@@ -89,6 +90,46 @@ pub fn volunteer_rows(raw: &RawService) -> Vec<VolunteerRow> {
         }
     }
     out
+}
+
+/// Flatten this service's volunteer rows into resolver `TreeNode`s.
+///
+/// The tree is intentionally **incomplete**: it only covers org-tree nodes
+/// that appear on *this service*. That keeps the implementation API-call-free,
+/// at the cost of failing to resolve names for depts/positions that aren't
+/// scheduled today. The error path makes that visible (the candidates listed
+/// in a `Did you mean?` are exactly what's on the service).
+pub fn volunteer_tree(rows: &[VolunteerRow]) -> Vec<TreeNode> {
+    let mut out: Vec<TreeNode> = Vec::new();
+    for r in rows {
+        if !r.department_id.is_empty() {
+            out.push(TreeNode {
+                id: r.department_id.clone(),
+                path: vec![r.department.clone()],
+                kind: NodeKind::Department,
+            });
+        }
+        if !r.sub_department_id.is_empty() {
+            out.push(TreeNode {
+                id: r.sub_department_id.clone(),
+                path: vec![r.department.clone(), r.sub_department.clone()],
+                kind: NodeKind::SubDepartment,
+            });
+        }
+        if !r.position_id.is_empty() {
+            let mut path = vec![r.department.clone()];
+            if !r.sub_department.is_empty() {
+                path.push(r.sub_department.clone());
+            }
+            path.push(r.position.clone());
+            out.push(TreeNode {
+                id: r.position_id.clone(),
+                path,
+                kind: NodeKind::Position,
+            });
+        }
+    }
+    resolve::dedupe(out)
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]

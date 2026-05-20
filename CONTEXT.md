@@ -53,7 +53,7 @@ Auth: `ELVANTO_API_KEY` env var (required, loaded from the shell or `.env`). No 
 
 - `songs list` defaults to text: `id | title | artist` using short song ids. `--album`, `--ccli`, and `--last-used` add columns; `--id long` prints full song UUIDs, `--id hidden` drops the column
 - `songs categories` uses first UUID blocks as short ids by default; `--id long` prints full UUIDs, `--id hidden` drops the column
-- `songs list --category ID` filters client-side by category id; accepts full or short ids; repeat for OR matching
+- `songs list --category` filters client-side; accepts full UUID, short first-block, or category name (with unique-prefix fallback); repeat for OR matching
 - `songs list --used-within 6m --not-used-within 2w` filters client-side by service song usage and auto-adds the last-used column; durations support `d`, `w`, `m`, `y`
 - `songs list` filters to active songs by default in text mode, returns all in `--json`
 - `songs list` auto-fetches all pages by default

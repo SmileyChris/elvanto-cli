@@ -13,15 +13,16 @@ The installed binary is named `elvanto`.
 - **Stable JSON output** behind `--json` on every list command, with normalized
   field names. Text output is compact tables suitable for piping into `awk`,
   `cut`, or `fzf`.
-- **Short IDs everywhere.** Elvanto returns full UUIDs, but the first
-  dash-separated block is unique within each list — so `elvanto songs list`
-  shows (and accepts) `45d9abe5` instead of `45d9abe5-1234-5678-9abc-...`.
+- **IDs, names, or paths — your call.** Elvanto returns full UUIDs;
+  `elvanto-cli` accepts the full UUID, its short first-block, or a name /
+  path like `Music Team/Vocals`. Ambiguous matches fail with a disambiguation
+  table; typos get fuzzy suggestions. See [Lookups](concepts/lookups.md).
 - **Default flags via environment variables.** Set `ELVANTO_SONGS_LIST`,
   `ELVANTO_SERVICES_PEOPLE`, etc. in `.env` and they auto-apply to that
   subcommand. See [Auto-injected flags](concepts/env-flags.md).
-- **Department / position filtering by id** — work the same way on both
-  `people list` and `services people` so you can isolate worship leaders,
-  vocalists, or production crew with one consistent flag.
+- **Consistent filter flag across commands.** `--in` works the same on
+  `people list` and `services people` — isolate worship leaders, vocalists,
+  or production crew with one syntax.
 
 ## Where to next
 

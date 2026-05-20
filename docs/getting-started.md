@@ -74,6 +74,17 @@ Every list command supports `--json` for structured output. Every list
 command also accepts `--id short|long|hidden` to switch the id column
 between short ids (default), full UUIDs, or omit the column entirely.
 
+Flags that take an entity reference (`--in`, `--category`, `--arrangement`,
+and the `<ID>` positional args) accept ids **or** names/paths:
+
+```sh
+elvanto people list --in "Music Team/Vocals"
+elvanto songs list --category Contemporary
+elvanto services people 02b06b47 --in "Worship Leader"
+```
+
+See [Lookups](concepts/lookups.md) for the full rules.
+
 ## Project-local defaults
 
 Create a `.env` next to your repo or working directory:

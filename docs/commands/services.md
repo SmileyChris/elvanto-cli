@@ -35,7 +35,7 @@ Columns: `id | date | name`. The date is formatted in the local time zone.
 | --- | --- |
 | `--from <YYYY-MM-DD>` | Inclusive start date. Defaults to 6 months before `--to`. |
 | `--to <YYYY-MM-DD>` | Inclusive end date. Defaults to today (local time). |
-| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [IDs](../concepts/ids.md). |
+| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON. |
 
 ### Examples
@@ -83,9 +83,9 @@ entirely.
 | Flag | Description |
 | --- | --- |
 | `--hide-unfilled` | Omit positions that have no person assigned. |
-| `--in <ID>` | Keep rows whose department, sub-department, **or** position id matches. Repeat for OR. Same id-only matching semantics as [`people list`](people.md#people-list). |
+| `--in <ID\|NAME\|PATH>` | Keep rows whose department, sub-department, **or** position matches. Accepts the same id/name/path forms as [`people list`](people.md#people-list); the resolver only sees nodes on this service. |
 | `--email` | Include each person's primary email as an extra column. |
-| `--id <MODE>` | `short` (default), `long`, or `hidden` for the person-id column. See [IDs](../concepts/ids.md). |
+| `--id <MODE>` | `short` (default), `long`, or `hidden` for the person-id column. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON. Includes ids at every level. |
 
 ### Examples
@@ -94,7 +94,12 @@ entirely.
 # Full team for one service
 elvanto services people 02b06b47
 
-# Worship team only, hide gaps, include emails
+# Worship team only, hide gaps, include emails — by name
+elvanto services people 02b06b47 \
+  --in "Service Leaders" --in Vocals \
+  --hide-unfilled --email
+
+# Same thing by id (better for .env defaults)
 elvanto services people 02b06b47 \
   --in bf40484c --in 03fa8320 \
   --hide-unfilled --email

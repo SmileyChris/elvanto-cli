@@ -35,7 +35,7 @@ Columns: `id | name`. Use the id with `songs list --category` to filter.
 
 | Flag | Description |
 | --- | --- |
-| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [IDs](../concepts/ids.md). |
+| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON. |
 
 ## `songs list`
@@ -62,13 +62,13 @@ date is appended; with `--album` and `--ccli` those columns are appended.
 
 | Flag | Description |
 | --- | --- |
-| `--category <ID>` | Keep songs assigned to this category. Repeat for OR. |
+| `--category <ID\|NAME>` | Keep songs assigned to this category. Accepts a full UUID, short first-block, or category name. Repeat for OR. See [Lookups](../concepts/lookups.md). |
 | `--used-within <DURATION>` | Keep songs used in a service within this duration. |
 | `--not-used-within <DURATION>` | Exclude songs used in a service within this duration. |
 | `--last-used` | Include the most recent service date column; also sorts most-recent-first. |
 | `--album` | Include the album column. |
 | `--ccli` | Include the CCLI number column. |
-| `--full-id` | Print full song UUIDs. |
+| `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |
 | `--json` | Emit normalized JSON; includes non-active songs. |
 
 ### Duration syntax
@@ -87,12 +87,17 @@ Examples: `14d`, `2w`, `6m`, `1y`.
 ### Examples
 
 ```sh
-# Contemporary + Modern, used in the last 6 months, not in the last 14 days,
+# By id, used in the last 6 months, not in the last 14 days,
 # sorted most-recently-used first
 elvanto songs list \
   --category 45d9abe5 --category 63b140bf \
   --used-within 6m --not-used-within 14d \
   --last-used
+
+# Same thing by category name (resolved at runtime)
+elvanto songs list \
+  --category Contemporary --category "Modern Worship" \
+  --used-within 6m --last-used
 
 # Cold-storage candidates: not used in 2+ years
 elvanto songs list --not-used-within 2y

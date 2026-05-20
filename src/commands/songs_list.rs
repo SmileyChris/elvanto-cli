@@ -1,10 +1,11 @@
 use crate::api::Client;
 use crate::cli::SongsListArgs;
 use crate::date_window::parse_duration_start;
-use crate::domain::category;
+use crate::domain::category::{self, category_tree, Category};
 use crate::domain::song::SongSummary;
 use crate::error::CliError;
 use crate::output;
+use crate::resolve;
 use chrono::{Local, NaiveDate};
 use std::collections::{HashMap, HashSet};
 
@@ -34,13 +35,23 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
 
     let mut raws = client.list_all_songs().await?;
     if !category_ids.is_empty() {
-        let wanted: HashSet<&str> = category_ids.iter().map(String::as_str).collect();
+        // Fetch the full categories list so the resolver can give accurate
+        // ambiguous/no-match errors even for categories with no active songs.
+        let cats: Vec<Category> = client
+            .list_categories()
+            .await?
+            .into_iter()
+            .map(Into::into)
+            .collect();
+        let tree = category_tree(&cats);
+        let resolved: HashSet<String> = resolve::resolve_all(&category_ids, &tree)?
+            .into_iter()
+            .collect();
         raws.retain(|song| {
-            song.categories.category.iter().any(|category| {
-                wanted
-                    .iter()
-                    .any(|id| category::id_matches(&category.id, id))
-            })
+            song.categories
+                .category
+                .iter()
+                .any(|c| resolved.iter().any(|id| category::id_matches(&c.id, id)))
         });
     }
 

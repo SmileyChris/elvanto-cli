@@ -191,6 +191,18 @@ async fn paginates_and_filters_active_in_text_mode() {
 async fn category_id_filter_matches_any_repeated_id() {
     let server = mock_server().await;
     Mock::given(method("POST"))
+        .and(path("/songs/categories/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "categories": { "category": [
+                {"id": "02b06b47-c275-11e6-aad3-0219ad55c99b", "name": "Praise"},
+                {"id": "90aee036-d5b7-11e5-aba7-06fb5fa8f77d", "name": "Hymns"},
+                {"id": "63b140bf-acb2-49b3-921a-6a507263bf6d", "name": "Seasonal"},
+            ]}
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
         .and(path("/songs/getAll.json"))
         .respond_with(ResponseTemplate::new(200).set_body_json(page(
             1,
@@ -257,8 +269,96 @@ async fn category_id_filter_matches_any_repeated_id() {
 }
 
 #[tokio::test]
+async fn category_filter_accepts_name_resolution() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/songs/categories/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "categories": { "category": [
+                {"id": "02b06b47-c275-11e6-aad3-0219ad55c99b", "name": "Praise"},
+                {"id": "90aee036-d5b7-11e5-aba7-06fb5fa8f77d", "name": "Hymns"},
+            ]}
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/songs/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(page(
+            1,
+            2,
+            2,
+            vec![
+                song_with_categories(
+                    "s1-0000-0000-0000-000000000000",
+                    "Praise Song",
+                    "A",
+                    "1",
+                    &[("02b06b47-c275-11e6-aad3-0219ad55c99b", "Praise")],
+                ),
+                song_with_categories(
+                    "s2-0000-0000-0000-000000000000",
+                    "Old Hymn",
+                    "B",
+                    "1",
+                    &[("90aee036-d5b7-11e5-aba7-06fb5fa8f77d", "Hymns")],
+                ),
+            ],
+        )))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["songs", "list", "--category", "Praise"])
+        .assert()
+        .success()
+        .stdout(contains("Praise Song").and(contains("Old Hymn").not()));
+}
+
+#[tokio::test]
+async fn category_filter_typo_suggests_did_you_mean() {
+    let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/songs/categories/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "categories": { "category": [
+                {"id": "02b06b47-c275-11e6-aad3-0219ad55c99b", "name": "Praise"},
+            ]}
+        })))
+        .mount(&server)
+        .await;
+    // songs/getAll is fetched first; mock with empty page so command can proceed.
+    Mock::given(method("POST"))
+        .and(path("/songs/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(page(1, 0, 0, vec![])))
+        .mount(&server)
+        .await;
+
+    bin()
+        .env("ELVANTO_API_KEY", "abcdefghij")
+        .env("ELVANTO_BASE_URL", server.uri())
+        .args(["songs", "list", "--category", "Prayse"])
+        .assert()
+        .failure()
+        .stderr(contains("Did you mean").and(contains("Praise")));
+}
+
+#[tokio::test]
 async fn category_id_filter_applies_to_json_without_active_filter() {
     let server = mock_server().await;
+    Mock::given(method("POST"))
+        .and(path("/songs/categories/getAll.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "status": "ok",
+            "categories": { "category": [
+                {"id": "c1aaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "name": "Praise"},
+            ]}
+        })))
+        .mount(&server)
+        .await;
     Mock::given(method("POST"))
         .and(path("/songs/getAll.json"))
         .respond_with(ResponseTemplate::new(200).set_body_json(page(
@@ -271,14 +371,14 @@ async fn category_id_filter_applies_to_json_without_active_filter() {
                     "Active",
                     "A",
                     "1",
-                    &[("c1", "Praise")],
+                    &[("c1aaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Praise")],
                 ),
                 song_with_categories(
                     "s2-0000-0000-0000-000000000000",
                     "Archived",
                     "B",
                     "0",
-                    &[("c1", "Praise")],
+                    &[("c1aaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Praise")],
                 ),
             ],
         )))
@@ -288,7 +388,7 @@ async fn category_id_filter_applies_to_json_without_active_filter() {
     let out = bin()
         .env("ELVANTO_API_KEY", "abcdefghij")
         .env("ELVANTO_BASE_URL", server.uri())
-        .args(["songs", "list", "--json", "--category", "c1"])
+        .args(["songs", "list", "--json", "--category", "c1aaaaaa"])
         .assert()
         .success()
         .get_output()

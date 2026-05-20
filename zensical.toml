@@ -15,7 +15,7 @@ nav = [
     { "Concepts" = [
         { "Authentication" = "concepts/auth.md" },
         { "Auto-injected flags" = "concepts/env-flags.md" },
-        { "IDs and short IDs" = "concepts/ids.md" },
+        { "Lookups: ids, names, paths" = "concepts/lookups.md" },
     ] },
     { "Commands" = [
         { "auth" = "commands/auth.md" },

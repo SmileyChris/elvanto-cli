@@ -103,9 +103,10 @@ pub struct SongsListArgs {
     /// Include the CCLI number column in text output.
     #[arg(long)]
     pub ccli: bool,
-    /// Keep songs assigned to this category id (full UUID or short first-block);
-    /// repeat for OR matching. Use `elvanto songs categories` to look up ids.
-    #[arg(long = "category", value_name = "ID")]
+    /// Keep songs assigned to this category. Accepts a full UUID, short
+    /// first-block, or category name (case-insensitive). Repeat for OR
+    /// matching. Use `elvanto songs categories` to browse.
+    #[arg(long = "category", value_name = "ID|NAME")]
     pub category_ids: Vec<String>,
     /// Id rendering: short (default), long, or hidden.
     #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
@@ -174,10 +175,11 @@ pub enum PeopleCommand {
 
 #[derive(Debug, Args)]
 pub struct PeopleListArgs {
-    /// Keep people whose department, sub-department, OR position id matches
-    /// (full UUID or short first-block). Repeat for OR across multiple ids.
-    /// Use `elvanto people departments` to look up ids.
-    #[arg(long = "in", value_name = "ID")]
+    /// Keep people whose department, sub-department, OR position matches.
+    /// Accepts a full UUID, short first-block, name (e.g. `Vocals`), or
+    /// path (e.g. `Music Team/Vocals`). A parent match includes the whole
+    /// subtree. Repeat for OR; use `elvanto people departments` to browse.
+    #[arg(long = "in", value_name = "ID|NAME|PATH")]
     pub department: Vec<String>,
     /// Id rendering: short (default), long, or hidden.
     #[arg(long = "id", value_enum, default_value_t = IdMode::Short, value_name = "MODE")]
@@ -203,10 +205,11 @@ pub struct ServicesPeopleArgs {
     /// Hide unfilled positions (default: show every position).
     #[arg(long)]
     pub hide_unfilled: bool,
-    /// Keep rows whose department, sub-department, OR position id matches
-    /// (full UUID or short first-block). Repeat for OR-match.
-    /// Use `elvanto people departments` to look up ids.
-    #[arg(long = "in", value_name = "ID")]
+    /// Keep rows whose department, sub-department, OR position matches.
+    /// Accepts a full UUID, short first-block, name, or path
+    /// (e.g. `Music Team/Vocals`). Repeat for OR. The resolver only sees
+    /// org-tree nodes that are on this service.
+    #[arg(long = "in", value_name = "ID|NAME|PATH")]
     pub department: Vec<String>,
     /// Include each person's primary email in the output.
     #[arg(long)]
