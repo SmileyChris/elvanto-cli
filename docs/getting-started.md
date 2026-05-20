@@ -1,24 +1,53 @@
 # Getting started
 
-This page takes you from "I have a clone of the repo" to "I'm running my first
-command against the live Elvanto API".
+This page takes you from zero to "I'm running my first command against the
+live Elvanto API".
 
 ## Prerequisites
 
-- Rust toolchain (stable, 1.75+). Install via [rustup](https://rustup.rs).
 - An Elvanto account with an API key. In Elvanto: **Settings → Account →
   Integrations → API**. Copy the key — you will not be able to see it again.
 
-## Build
+## Install
 
-From the repo root:
+Two options. Use the pre-built binary if you just want to run `elvanto`;
+build from source if you want to hack on it.
+
+### Option 1: pre-built binary (recommended)
+
+Pre-built archives for Linux, macOS (arm64 + x86_64), and Windows are
+published on each [release](https://github.com/SmileyChris/elvanto-cli/releases).
+Pick the archive for your platform from the latest release, extract it,
+and drop the `elvanto` binary somewhere on your `PATH`.
+
+Linux / macOS one-liner (replace the URL with the archive for your platform):
 
 ```sh
+curl -L https://github.com/SmileyChris/elvanto-cli/releases/latest/download/elvanto-v0.1.0-x86_64-unknown-linux-gnu.tar.gz \
+  | tar -xz -C ~/.local/bin
+elvanto --version
+```
+
+| Platform | Archive |
+| --- | --- |
+| Linux x86_64 | `elvanto-vX.Y.Z-x86_64-unknown-linux-gnu.tar.gz` |
+| macOS arm64 (Apple Silicon) | `elvanto-vX.Y.Z-aarch64-apple-darwin.tar.gz` |
+| macOS x86_64 (Intel) | `elvanto-vX.Y.Z-x86_64-apple-darwin.tar.gz` |
+| Windows x86_64 | `elvanto-vX.Y.Z-x86_64-pc-windows-msvc.zip` |
+
+### Option 2: build from source
+
+Needs a Rust toolchain (stable, 1.75+). Install via [rustup](https://rustup.rs).
+
+```sh
+git clone https://github.com/SmileyChris/elvanto-cli.git
+cd elvanto-cli
 cargo build --release
 ```
 
-The binary is at `target/release/elvanto`. Either add `target/release` to your
-`PATH`, copy `elvanto` to `~/.local/bin`, or use the full path below.
+The binary lands at `target/release/elvanto`. Either add `target/release`
+to your `PATH`, copy `elvanto` to `~/.local/bin`, or use the full path
+below.
 
 ## Provide an API key
 
