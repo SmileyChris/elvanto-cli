@@ -11,11 +11,26 @@
 
 use crate::error::CliError;
 use keyring::Entry;
+use std::sync::Once;
 
 const SERVICE: &str = "elvanto-cli";
 const ACCOUNT: &str = "api-key";
 
+/// When the env var `ELVANTO_KEYRING_MOCK=1` is set, swap in keyring's
+/// in-memory mock backend so tests don't touch the user's real OS keyring.
+/// Production users never set this — they get the native backend.
+static MOCK_INIT: Once = Once::new();
+
+fn install_mock_if_requested() {
+    MOCK_INIT.call_once(|| {
+        if std::env::var("ELVANTO_KEYRING_MOCK").as_deref() == Ok("1") {
+            keyring::set_default_credential_builder(keyring::mock::default_credential_builder());
+        }
+    });
+}
+
 fn entry() -> Result<Entry, CliError> {
+    install_mock_if_requested();
     Entry::new(SERVICE, ACCOUNT).map_err(|e| CliError::Io(format!("keyring: {e}")))
 }
 
@@ -42,5 +57,25 @@ pub fn delete() -> Result<bool, CliError> {
         Ok(()) => Ok(true),
         Err(keyring::Error::NoEntry) => Ok(false),
         Err(e) => Err(CliError::Io(format!("keyring: {e}"))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `keyring`'s mock backend has `EntryOnly` persistence: every call to
+    /// `Entry::new` produces a fresh, empty credential, so operations on
+    /// different entries don't share state. That's exactly what we want for
+    /// integration tests — each spawned bin starts with an empty keyring —
+    /// but it does mean a single-process round-trip (`set` then `get`) won't
+    /// see the stored value. The integration tests in `tests/auth_status.rs`
+    /// drive the end-to-end behaviour; this unit test just confirms the mock
+    /// installs cleanly and reports "no entry" on a fresh process.
+    #[test]
+    fn mock_backend_reports_empty_when_installed() {
+        std::env::set_var("ELVANTO_KEYRING_MOCK", "1");
+        assert_eq!(get().unwrap(), None);
+        assert!(!delete().unwrap());
     }
 }
