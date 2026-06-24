@@ -14,6 +14,8 @@ pub struct SongSummary {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_used: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub count: Option<usize>,
 }
 
 impl From<RawSong> for SongSummary {
@@ -27,6 +29,7 @@ impl From<RawSong> for SongSummary {
             ccli_number: raw.number,
             status,
             last_used: None,
+            count: None,
         }
     }
 }

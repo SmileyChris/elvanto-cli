@@ -114,6 +114,9 @@ pub struct SongsListArgs {
     /// Include the most recent service date in text output.
     #[arg(long)]
     pub last_used: bool,
+    /// Include number of times sung in text output.
+    #[arg(long)]
+    pub count: bool,
     /// Keep songs used in a service within this duration (e.g. 6m, 2w).
     #[arg(long, value_name = "DURATION")]
     pub used_within: Option<String>,
@@ -163,6 +166,8 @@ pub enum ServicesCommand {
     List(ServicesListArgs),
     /// Show people assigned to a service (volunteers, by position).
     People(ServicesPeopleArgs),
+    /// Analyse song usage across services.
+    SongUsage(ServicesSongUsageArgs),
 }
 
 #[derive(Debug, Subcommand)]
@@ -220,6 +225,19 @@ pub struct ServicesPeopleArgs {
     /// Emit normalized JSON instead of text.
     #[arg(long)]
     pub json: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ServicesSongUsageArgs {
+    /// Inclusive start date (YYYY-MM-DD). Defaults to 12 months before --to.
+    #[arg(long, value_name = "YYYY-MM-DD")]
+    pub from: Option<String>,
+    /// Inclusive end date (YYYY-MM-DD). Defaults to today (local time).
+    #[arg(long, value_name = "YYYY-MM-DD")]
+    pub to: Option<String>,
+    /// Only show songs used at most this many times (default: 2).
+    #[arg(long, default_value_t = 2, value_name = "N")]
+    pub max_uses: u32,
 }
 
 #[derive(Debug, Args)]

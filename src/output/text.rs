@@ -31,6 +31,7 @@ pub fn write_songs<W: Write>(
     show_ccli: bool,
     mode: IdMode,
     show_last_used: bool,
+    show_count: bool,
 ) -> io::Result<()> {
     for s in songs {
         if let Some(id) = id_cell(&s.id, mode) {
@@ -45,6 +46,9 @@ pub fn write_songs<W: Write>(
         }
         if show_last_used {
             write!(w, " | {}", s.last_used.as_deref().unwrap_or("-"))?;
+        }
+        if show_count {
+            write!(w, " | {}", s.count.map(|c| c.to_string()).unwrap_or_else(|| "-".to_string()))?;
         }
         writeln!(w)?;
     }

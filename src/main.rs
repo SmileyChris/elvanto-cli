@@ -85,6 +85,9 @@ async fn run(cli: Cli) -> Result<(), CliError> {
             cli::ServicesCommand::People(args) => {
                 commands::services_people::run(&client, args).await
             }
+            cli::ServicesCommand::SongUsage(args) => {
+                commands::services_song_usage::run(&client, args).await
+            }
         },
         Command::Songs { command } => match command {
             cli::SongsCommand::Categories(args) => {

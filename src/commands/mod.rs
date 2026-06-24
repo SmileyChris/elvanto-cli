@@ -5,6 +5,7 @@ pub mod people_list;
 pub mod people_org;
 pub mod services_list;
 pub mod services_people;
+pub mod services_song_usage;
 pub mod songs_categories;
 pub mod songs_chart;
 pub mod songs_list;
