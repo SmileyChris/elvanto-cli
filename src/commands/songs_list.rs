@@ -17,6 +17,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         category_ids,
         id_mode,
         last_used,
+        count,
         used_within,
         not_used_within,
     } = args;
@@ -32,6 +33,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         .transpose()?;
     let has_service_usage_filter = used_start.is_some() || not_used_start.is_some();
     let show_last_used = last_used || has_service_usage_filter;
+    let show_count = count || has_service_usage_filter;
 
     let mut raws = client.list_all_songs().await?;
     if !category_ids.is_empty() {
@@ -56,6 +58,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
     }
 
     let mut last_used_by_song = HashMap::new();
+    let mut count_by_song: HashMap<String, usize> = HashMap::new();
     if show_last_used {
         let service_from = if has_service_usage_filter {
             [used_start, not_used_start]
@@ -69,7 +72,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         let service_from_str = service_from.format("%Y-%m-%d").to_string();
         let today_str = today.format("%Y-%m-%d").to_string();
         let services = client
-            .list_services_with_song_usage(&service_from_str, &today_str)
+            .list_services_with_details(&service_from_str, &today_str)
             .await?;
 
         for service in &services {
@@ -77,14 +80,16 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
                 continue;
             };
             for song_id in service.song_ids() {
+                let key = song_id.to_string();
                 last_used_by_song
-                    .entry(song_id.to_string())
+                    .entry(key.clone())
                     .and_modify(|last: &mut NaiveDate| {
                         if date > *last {
                             *last = date;
                         }
                     })
                     .or_insert(date);
+                *count_by_song.entry(key).or_insert(0) += 1;
             }
         }
 
@@ -113,6 +118,9 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
                     .get(&song.id)
                     .map(|date| date.format("%Y-%m-%d").to_string());
             }
+            if show_count {
+                song.count = count_by_song.get(&song.id).copied();
+            }
             song
         })
         .collect();
@@ -130,7 +138,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         output::json::write_pretty(&mut lock, &all)
     } else {
         let active: Vec<SongSummary> = all.into_iter().filter(|s| s.status == "active").collect();
-        output::text::write_songs(&mut lock, &active, album, ccli, id_mode, show_last_used)
+        output::text::write_songs(&mut lock, &active, album, ccli, id_mode, show_last_used, show_count)
     };
     res.map_err(|e| CliError::Io(format!("write error: {e}")))
 }

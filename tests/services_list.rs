@@ -135,8 +135,8 @@ async fn from_and_to_flags_drive_request_body() {
     Mock::given(method("POST"))
         .and(path("/services/getAll.json"))
         .and(body_partial_json(serde_json::json!({
-            "date_from": "2026-01-01",
-            "date_to": "2026-03-31"
+            "start": "2026-01-01",
+            "end": "2026-03-31"
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(ok_page(vec![svc(
             "svc-9",

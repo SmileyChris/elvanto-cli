@@ -91,8 +91,8 @@ impl Client {
                     &serde_json::json!({
                         "page": page,
                         "page_size": SERVICES_PAGE_SIZE,
-                        "date_from": date_from,
-                        "date_to": date_to,
+                        "start": date_from,
+                        "end": date_to,
                     }),
                 )
                 .await?;
@@ -207,7 +207,8 @@ impl Client {
             .ok_or_else(|| CliError::NotFound(format!("service {id}")))
     }
 
-    pub async fn list_services_with_song_usage(
+    /// Fetch services with songs, plans, and volunteers for analysis.
+    pub async fn list_services_with_details(
         &self,
         date_from: &str,
         date_to: &str,
@@ -224,7 +225,7 @@ impl Client {
                         "page_size": SERVICES_PAGE_SIZE,
                         "start": date_from,
                         "end": date_to,
-                        "fields": ["songs", "plans"],
+                        "fields": ["songs", "plans", "volunteers"],
                     }),
                 )
                 .await?;

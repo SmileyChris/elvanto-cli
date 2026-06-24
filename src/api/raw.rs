@@ -310,18 +310,18 @@ pub struct RawService {
 
 impl RawService {
     pub fn song_ids(&self) -> Vec<&str> {
-        let mut ids = Vec::new();
+        let mut ids = std::collections::HashSet::new();
         ids.extend(self.songs.song.iter().map(|song| song.id.as_str()));
 
         for plan in &self.plans.plan {
             for item in &plan.items.item {
                 if let Some(id) = item.song.get("id").and_then(|id| id.as_str()) {
-                    ids.push(id);
+                    ids.insert(id);
                 }
             }
         }
 
-        ids
+        ids.into_iter().collect()
     }
 }
 
@@ -657,7 +657,9 @@ mod tests {
         }))
         .unwrap();
 
-        assert_eq!(service.song_ids(), vec!["sidebar-song", "plan-song"]);
+        let mut ids = service.song_ids();
+        ids.sort();
+        assert_eq!(ids, vec!["plan-song", "sidebar-song"]);
     }
 
     #[test]
