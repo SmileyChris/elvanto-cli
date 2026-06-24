@@ -53,7 +53,7 @@ jobs:
           bin: elvanto
           target: ${{ matrix.target }}
           # tar.gz on unix, .zip on windows — defaults from the action.
-          archive: $bin-$tag-$target
+          archive: $bin-$target
           # On tag push, github.ref is already refs/tags/vX.Y.Z. On a
           # workflow_dispatch re-run, the input is just "vX.Y.Z" so we
           # synthesize the full ref the action expects.
