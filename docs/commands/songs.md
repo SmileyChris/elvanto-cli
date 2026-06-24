@@ -66,6 +66,7 @@ date is appended; with `--album` and `--ccli` those columns are appended.
 | `--used-within <DURATION>` | Keep songs used in a service within this duration. |
 | `--not-used-within <DURATION>` | Exclude songs used in a service within this duration. |
 | `--last-used` | Include the most recent service date column; also sorts most-recent-first. |
+| `--count` | Include number of times the song has been used in services. |
 | `--album` | Include the album column. |
 | `--ccli` | Include the CCLI number column. |
 | `--id <MODE>` | `short` (default), `long`, or `hidden`. See [Lookups](../concepts/lookups.md). |

@@ -8,6 +8,7 @@ Services (calendar event) commands.
 | --- | --- |
 | [`services list`](#services-list) | List services in a date range (defaults to the last 6 months) |
 | [`services people`](#services-people) | Show volunteers assigned to a specific service |
+| [`services song-usage`](#services-song-usage) | Analyse how often each song has been used |
 
 ---
 
@@ -125,3 +126,47 @@ JSON output:
 
 Unfilled positions appear in JSON with `person_id` and `name` omitted (when
 `--hide-unfilled` is not set).
+
+## `services song-usage`
+
+```text
+elvanto services song-usage [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--max-uses N]
+```
+
+Counts how many times each song has been used across services, and lists those
+sung N or fewer times (default: 2). Includes who led each time. Useful for
+finding songs that could use more rotation.
+
+Text output (no `--json` mode):
+
+```
+Songs sung ≤ 2 times in the last 12 months:
+
+"Lord I Need You" by Christy Nockels, ... — sung once
+  2025-11-22 — Led by Lara Coates
+
+"Mighty To Save" by Ben Fielding, Reuben Morgan — sung once
+  2026-05-23 — Led by Chris Beaven
+
+"O Come To The Altar" by Chris Brown, ... — sung twice
+  2025-11-29 — Led by Chris Beaven
+  2026-02-21 — Led by Chris Beaven
+```
+
+### Flags
+
+| Flag | Description |
+| --- | --- |
+| `--from <YYYY-MM-DD>` | Inclusive start date. Defaults to 12 months before `--to`. |
+| `--to <YYYY-MM-DD>` | Inclusive end date. Defaults to today. |
+| `--max-uses <N>` | Only show songs used ≤ N times (default: 2). |
+
+### Examples
+
+```sh
+# Songs used 1-2 times in the last 12 months
+elvanto services song-usage
+
+# Songs used ≤ 3 times since the start of 2026
+elvanto services song-usage --from 2026-01-01 --max-uses 3
+```
