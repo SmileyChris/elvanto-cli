@@ -238,6 +238,9 @@ pub struct ServicesSongUsageArgs {
     /// Only show songs used at most this many times (default: 2).
     #[arg(long, default_value_t = 2, value_name = "N")]
     pub max_uses: u32,
+    /// Only show songs that have been led by a single person (ignores --max-uses).
+    #[arg(long)]
+    pub one_leader: bool,
 }
 
 #[derive(Debug, Args)]

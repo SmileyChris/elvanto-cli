@@ -5,7 +5,7 @@ use crate::date_window::parse_date;
 use crate::domain::service::volunteer_rows;
 use crate::error::CliError;
 use chrono::Local;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), CliError> {
     let today = Local::now().date_naive();
@@ -53,18 +53,33 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
         }
     }
 
-    // Filter to songs with max_uses or fewer
+    // Filter
     let mut filtered: Vec<(&String, &SongUsage)> = song_usage
         .iter()
-        .filter(|(_, u)| u.uses.len() as u32 <= args.max_uses)
+        .filter(|(_, u)| {
+            let under_max = u.uses.len() as u32 <= args.max_uses;
+            let one_leader = args.one_leader
+                && {
+                    let leaders: HashSet<&str> = u
+                        .uses
+                        .iter()
+                        .filter_map(|r| {
+                            if r.leader.is_empty() {
+                                None
+                            } else {
+                                Some(r.leader.as_str())
+                            }
+                        })
+                        .collect();
+                    leaders.len() == 1
+                };
+            under_max || one_leader
+        })
         .collect();
     filtered.sort_by_key(|(_, u)| u.uses.len());
 
     if filtered.is_empty() {
-        println!(
-            "No songs found with ≤ {} uses in the date range.",
-            args.max_uses
-        );
+        println!("No songs found matching the criteria.");
         return Ok(());
     }
 
@@ -85,10 +100,18 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
         .map(|s| (s.id.as_str(), s.artist.as_str()))
         .collect();
 
-    println!(
-        "Songs sung ≤ {} times in the last 12 months:\n",
-        args.max_uses
-    );
+    let heading = if args.one_leader {
+        format!(
+            "Songs sung ≤ {} times or led by only one person:\n",
+            args.max_uses
+        )
+    } else {
+        format!(
+            "Songs sung ≤ {} times in the last 12 months:\n",
+            args.max_uses
+        )
+    };
+    println!("{heading}");
 
     for (id, usage) in &filtered {
         let title = *song_titles.get(id.as_str()).unwrap_or(&"<unknown>");

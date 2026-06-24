@@ -33,7 +33,11 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
         .transpose()?;
     let has_service_usage_filter = used_start.is_some() || not_used_start.is_some();
     let show_last_used = last_used || has_service_usage_filter;
-    let show_count = count || has_service_usage_filter;
+    // Track counts whenever we fetch service data (for filters), but only
+    // show the column when explicitly requested.
+    let show_count = count;
+    let track_counts = count || has_service_usage_filter;
+    let needs_service_data = show_last_used || track_counts;
 
     let mut raws = client.list_all_songs().await?;
     if !category_ids.is_empty() {
@@ -59,7 +63,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
 
     let mut last_used_by_song = HashMap::new();
     let mut count_by_song: HashMap<String, usize> = HashMap::new();
-    if show_last_used {
+    if needs_service_data {
         let service_from = if has_service_usage_filter {
             [used_start, not_used_start]
                 .into_iter()
@@ -118,7 +122,7 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
                     .get(&song.id)
                     .map(|date| date.format("%Y-%m-%d").to_string());
             }
-            if show_count {
+            if track_counts {
                 song.count = count_by_song.get(&song.id).copied();
             }
             song
@@ -129,6 +133,15 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
     // Date strings are YYYY-MM-DD so lexicographic order = chronological order.
     if last_used {
         all.sort_by(|a, b| b.last_used.cmp(&a.last_used));
+    }
+    // --count sorts most-used-first; songs never used go to the end.
+    if count {
+        all.sort_by(|a, b| match (&a.count, &b.count) {
+            (None, None) => std::cmp::Ordering::Equal,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (Some(ac), Some(bc)) => bc.cmp(ac),
+        });
     }
 
     let stdout = std::io::stdout();
