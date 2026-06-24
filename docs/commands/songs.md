@@ -56,7 +56,8 @@ Default text output:
 ```
 
 Columns: `id | title | artist`. With `--last-used` the most recent service
-date is appended; with `--album` and `--ccli` those columns are appended.
+date is appended; with `--count` the number of times used; with `--album` and
+`--ccli` those columns are appended.
 
 ### Flags
 
@@ -94,6 +95,9 @@ elvanto songs list \
   --category 45d9abe5 --category 63b140bf \
   --used-within 6m --not-used-within 14d \
   --last-used
+
+# Last used date with usage count
+elvanto songs list --last-used --count
 
 # Same thing by category name (resolved at runtime)
 elvanto songs list \
