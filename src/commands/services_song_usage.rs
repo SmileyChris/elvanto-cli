@@ -46,6 +46,13 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
             let date = crate::date_window::service_date_nz(&svc.date)
                 .map(|d| d.to_string())
                 .unwrap_or_else(|| svc.date.chars().take(10).collect());
+            // Non-standard services (youth, worship & prayer, etc.) are
+            // recorded so the usage history can show where a song was sung.
+            let service = if svc.service_type.name == "Church Service" {
+                String::new()
+            } else {
+                svc.name.clone()
+            };
             song_usage
                 .entry(use_.id)
                 .or_default()
@@ -54,6 +61,7 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
                     date,
                     leader: leader.clone(),
                     key: use_.key,
+                    service,
                 });
         }
     }
@@ -82,6 +90,7 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
                         "date": u.date,
                         "leader": u.leader,
                         "key": u.key,
+                        "service": u.service,
                     })).collect::<Vec<_>>(),
                 })
             })
@@ -164,7 +173,12 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
                 Some(k) if !k.is_empty() => format!(" ({})", k),
                 _ => String::new(),
             };
-            println!("  {} — {}{}", u.date, leader, key_part);
+            let service_part = if u.service.is_empty() {
+                String::new()
+            } else {
+                format!(" — {}", u.service)
+            };
+            println!("  {} — {}{}{}", u.date, leader, key_part, service_part);
         }
         println!();
     }
@@ -184,6 +198,8 @@ struct UseRecord {
     date: String,
     leader: String,
     key: Option<String>,
+    /// Service name for non-standard services, empty for standard Sundays.
+    service: String,
 }
 
 fn find_worship_leader(svc: &RawService) -> String {
