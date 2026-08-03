@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+chrono-tz = "0.10"
 clap = { version = "4", features = ["derive"] }
 dotenvy = "0.15"
 keyring = { version = "3", features = ["linux-native", "apple-native", "windows-native"] }

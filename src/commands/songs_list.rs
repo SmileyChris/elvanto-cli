@@ -157,6 +157,5 @@ pub async fn run(client: &Client, args: SongsListArgs) -> Result<(), CliError> {
 }
 
 fn service_date(value: &str) -> Option<NaiveDate> {
-    let date = value.get(..10).unwrap_or(value);
-    NaiveDate::parse_from_str(date, "%Y-%m-%d").ok()
+    crate::date_window::service_date_nz(value)
 }

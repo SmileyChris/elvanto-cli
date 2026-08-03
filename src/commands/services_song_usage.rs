@@ -43,12 +43,15 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
         let leader = find_worship_leader(svc);
 
         for use_ in svc.song_uses() {
+            let date = crate::date_window::service_date_nz(&svc.date)
+                .map(|d| d.to_string())
+                .unwrap_or_else(|| svc.date.chars().take(10).collect());
             song_usage
                 .entry(use_.id)
                 .or_default()
                 .uses
                 .push(UseRecord {
-                    date: svc.date.chars().take(10).collect(),
+                    date,
                     leader: leader.clone(),
                     key: use_.key,
                 });
