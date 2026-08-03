@@ -241,6 +241,9 @@ pub struct ServicesSongUsageArgs {
     /// Only show songs that have been led by a single person (ignores --max-uses).
     #[arg(long)]
     pub one_leader: bool,
+    /// Emit all song usage as JSON (ignores --max-uses / --one-leader filtering).
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]

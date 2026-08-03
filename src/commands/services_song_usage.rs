@@ -5,6 +5,7 @@ use crate::date_window::parse_date;
 use crate::domain::service::volunteer_rows;
 use crate::error::CliError;
 use chrono::Local;
+use serde_json::json;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), CliError> {
@@ -35,25 +36,64 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
 
     eprintln!("Got {} services.", services.len());
 
-    // song_id -> Vec<(service_date, leader_name)>
+    // song_id -> uses (date, leader, key)
     let mut song_usage: BTreeMap<String, SongUsage> = BTreeMap::new();
 
     for svc in &services {
         let leader = find_worship_leader(svc);
 
-        for song_id in svc.song_ids() {
+        for use_ in svc.song_uses() {
             song_usage
-                .entry(song_id.to_string())
+                .entry(use_.id)
                 .or_default()
                 .uses
                 .push(UseRecord {
                     date: svc.date.chars().take(10).collect(),
                     leader: leader.clone(),
+                    key: use_.key,
                 });
         }
     }
 
-    // Filter
+    // We need song titles/artists for output. One batch call.
+    let all_songs = client.list_all_songs().await?;
+    let song_titles: HashMap<&str, &str> = all_songs
+        .iter()
+        .map(|s| (s.id.as_str(), s.title.as_str()))
+        .collect();
+    let song_artists: HashMap<&str, &str> = all_songs
+        .iter()
+        .map(|s| (s.id.as_str(), s.artist.as_str()))
+        .collect();
+
+    if args.json {
+        // Machine-readable full dump: no max-uses / one-leader filtering.
+        let mut out: Vec<serde_json::Value> = song_usage
+            .iter()
+            .map(|(id, usage)| {
+                json!({
+                    "song_id": id,
+                    "title": song_titles.get(id.as_str()).copied().unwrap_or("<unknown>"),
+                    "artist": song_artists.get(id.as_str()).copied().unwrap_or(""),
+                    "uses": usage.uses.iter().map(|u| json!({
+                        "date": u.date,
+                        "leader": u.leader,
+                        "key": u.key,
+                    })).collect::<Vec<_>>(),
+                })
+            })
+            .collect();
+        out.sort_by(|a, b| {
+            a["title"]
+                .as_str()
+                .unwrap_or("")
+                .cmp(b["title"].as_str().unwrap_or(""))
+        });
+        println!("{}", serde_json::to_string_pretty(&out).map_err(|e| CliError::Io(format!("json: {e}")))?);
+        return Ok(());
+    }
+
+    // Filter for the text analysis view
     let mut filtered: Vec<(&String, &SongUsage)> = song_usage
         .iter()
         .filter(|(_, u)| {
@@ -82,23 +122,6 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
         println!("No songs found matching the criteria.");
         return Ok(());
     }
-
-    // Fetch song details
-    eprintln!(
-        "Fetching details for {} songs…",
-        filtered.len()
-    );
-
-    // We need to look up song titles. Let's do it in batches via the songs list
-    let all_songs = client.list_all_songs().await?;
-    let song_titles: HashMap<&str, &str> = all_songs
-        .iter()
-        .map(|s| (s.id.as_str(), s.title.as_str()))
-        .collect();
-    let song_artists: HashMap<&str, &str> = all_songs
-        .iter()
-        .map(|s| (s.id.as_str(), s.artist.as_str()))
-        .collect();
 
     let heading = if args.one_leader {
         format!(
@@ -134,7 +157,11 @@ pub async fn run(client: &Client, args: ServicesSongUsageArgs) -> Result<(), Cli
             } else {
                 format!("Led by {}", u.leader)
             };
-            println!("  {} — {}", u.date, leader);
+            let key_part = match &u.key {
+                Some(k) if !k.is_empty() => format!(" ({})", k),
+                _ => String::new(),
+            };
+            println!("  {} — {}{}", u.date, leader, key_part);
         }
         println!();
     }
@@ -153,6 +180,7 @@ struct SongUsage {
 struct UseRecord {
     date: String,
     leader: String,
+    key: Option<String>,
 }
 
 fn find_worship_leader(svc: &RawService) -> String {

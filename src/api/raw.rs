@@ -323,6 +323,50 @@ impl RawService {
 
         ids.into_iter().collect()
     }
+
+    /// Song occurrences on this service with the key set for each (if any).
+    /// Merges the service song list with plan items; plan-item keys win when
+    /// both are present.
+    pub fn song_uses(&self) -> Vec<ServiceSongUse> {
+        let mut map: std::collections::BTreeMap<String, Option<String>> =
+            std::collections::BTreeMap::new();
+
+        for song in &self.songs.song {
+            if !song.id.is_empty() {
+                map.entry(song.id.clone()).or_insert_with(|| song.arrangement.key.clone());
+            }
+        }
+        for plan in &self.plans.plan {
+            for item in &plan.items.item {
+                if let Some(id) = item.song.get("id").and_then(|id| id.as_str()) {
+                    if id.is_empty() {
+                        continue;
+                    }
+                    let key = item
+                        .song
+                        .get("arrangement")
+                        .and_then(|a| a.get("key"))
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let entry = map.entry(id.to_string()).or_insert(None);
+                    if key.is_some() {
+                        *entry = key;
+                    }
+                }
+            }
+        }
+
+        map.into_iter()
+            .map(|(id, key)| ServiceSongUse { id, key })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ServiceSongUse {
+    pub id: String,
+    /// Key set for the arrangement on this service (e.g. "C"), if recorded.
+    pub key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
@@ -353,6 +397,15 @@ pub struct RawServiceSongList {
 pub struct RawServiceSong {
     #[serde(default)]
     pub id: String,
+    #[serde(default)]
+    pub arrangement: RawServiceArrangement,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct RawServiceArrangement {
+    /// Key set for this arrangement on this service (if any).
+    #[serde(default)]
+    pub key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]

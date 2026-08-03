@@ -16,6 +16,8 @@ pub struct SongSummary {
     pub last_used: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<usize>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub categories: Vec<String>,
 }
 
 impl From<RawSong> for SongSummary {
@@ -30,6 +32,7 @@ impl From<RawSong> for SongSummary {
             status,
             last_used: None,
             count: None,
+            categories: raw.categories.category.iter().map(|c| c.name.clone()).collect(),
         }
     }
 }

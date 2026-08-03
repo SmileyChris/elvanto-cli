@@ -160,12 +160,16 @@ Songs sung ≤ 2 times in the last 12 months:
 | `--from <YYYY-MM-DD>` | Inclusive start date. Defaults to 12 months before `--to`. |
 | `--to <YYYY-MM-DD>` | Inclusive end date. Defaults to today. |
 | `--max-uses <N>` | Only show songs used ≤ N times (default: 2). |
+| `--json` | Emit all song usage as JSON (ignores `--max-uses` / `--one-leader`). |
 
 ### Examples
 
 ```sh
 # Songs used 1-2 times in the last 12 months
 elvanto services song-usage
+
+# Full usage history as JSON (for scripts)
+elvanto services song-usage --json
 
 # Songs used ≤ 3 times since the start of 2026
 elvanto services song-usage --from 2026-01-01 --max-uses 3
