@@ -55,11 +55,71 @@ impl Client {
             serde_json::json!({ "id": id })
         };
         let resp: crate::api::raw::SongInfoResponse = self.post("songs/getInfo", &body).await?;
-        resp.songs
-            .song
+        resp.song
             .into_iter()
             .next()
             .ok_or_else(|| CliError::NotFound(format!("song {id}")))
+    }
+
+    pub async fn list_arrangements_for_song(
+        &self,
+        song_id: &str,
+    ) -> Result<Vec<crate::api::raw::RawArrangement>, CliError> {
+        const PAGE_SIZE: u32 = 100;
+        let mut out = Vec::new();
+        let mut page: u32 = 1;
+        loop {
+            let resp: crate::api::raw::ArrangementsResponse = self
+                .post(
+                    "songs/arrangements/getAll",
+                    &serde_json::json!({
+                        "song_id": song_id,
+                        "page": page,
+                        "page_size": PAGE_SIZE,
+                    }),
+                )
+                .await?;
+            let got = resp.arrangements.arrangement.len() as u32;
+            out.extend(resp.arrangements.arrangement);
+            if got < PAGE_SIZE {
+                break;
+            }
+            page += 1;
+            if page > 1000 {
+                break;
+            }
+        }
+        Ok(out)
+    }
+
+    pub async fn create_arrangement_key(
+        &self,
+        arrangement_id: &str,
+        name: &str,
+        key_starting: &str,
+    ) -> Result<serde_json::Value, CliError> {
+        let body = serde_json::json!({
+            "arrangement_id": arrangement_id,
+            "name": name,
+            "key_starting": key_starting,
+        });
+        self.post("songs/keys/create", &body).await
+    }
+
+    pub async fn list_arrangement_keys(
+        &self,
+        arrangement_id: &str,
+    ) -> Result<Vec<crate::api::raw::RawKey>, CliError> {
+        let resp: crate::api::raw::KeysResponse = self
+            .post(
+                "songs/keys/getAll",
+                &serde_json::json!({
+                    "arrangement_id": arrangement_id,
+                    "page_size": 100,
+                }),
+            )
+            .await?;
+        Ok(resp.keys.key)
     }
 
     pub async fn get_arrangement_info(

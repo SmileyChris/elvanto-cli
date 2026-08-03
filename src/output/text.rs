@@ -71,6 +71,13 @@ pub fn write_song_curated<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<
 
     writeln!(w, "Arrangements:")?;
     for arr in &song.arrangements {
+        let mut parts: Vec<String> = Vec::new();
+        if let Some(km) = &arr.key_male {
+            parts.push(format!("\u{2642} {}", km));
+        }
+        if let Some(kf) = &arr.key_female {
+            parts.push(format!("\u{2640} {}", kf));
+        }
         let keys: Vec<String> = arr
             .keys
             .iter()
@@ -79,12 +86,15 @@ pub fn write_song_curated<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<
                 None => k.starting.clone(),
             })
             .collect();
-        let keys_str = if keys.is_empty() {
-            "\u{2014}".into()
+        if !keys.is_empty() {
+            parts.push(keys.join(", "));
+        }
+        let info = if parts.is_empty() {
+            "\u{2014}".to_string()
         } else {
-            keys.join(", ")
+            parts.join(" | ")
         };
-        writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
+        writeln!(w, "  - {} [{}]", arr.name, info)?;
     }
     Ok(())
 }
@@ -119,6 +129,13 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
     }
     writeln!(w, "Arrangements:")?;
     for arr in &song.arrangements {
+        let mut parts: Vec<String> = Vec::new();
+        if let Some(km) = &arr.key_male {
+            parts.push(format!("\u{2642} {}", km));
+        }
+        if let Some(kf) = &arr.key_female {
+            parts.push(format!("\u{2640} {}", kf));
+        }
         let keys: Vec<String> = arr
             .keys
             .iter()
@@ -127,12 +144,15 @@ pub fn write_song_full<W: Write>(w: &mut W, song: &SongDetail) -> io::Result<()>
                 None => k.starting.clone(),
             })
             .collect();
-        let keys_str = if keys.is_empty() {
-            "\u{2014}".into()
+        if !keys.is_empty() {
+            parts.push(keys.join(", "));
+        }
+        let info = if parts.is_empty() {
+            "\u{2014}".to_string()
         } else {
-            keys.join(", ")
+            parts.join(" | ")
         };
-        writeln!(w, "  - {} [{}]", arr.name, keys_str)?;
+        writeln!(w, "  - {} [{}]", arr.name, info)?;
     }
     Ok(())
 }

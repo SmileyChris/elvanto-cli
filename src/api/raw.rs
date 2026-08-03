@@ -102,7 +102,9 @@ pub struct RawArrangement {
     pub id: String,
     #[serde(default)]
     pub name: String,
-    #[serde(default)]
+    /// Sequence can be a plain string (songs/getInfo) or an array of strings
+    /// (songs/arrangements/getAll). Accept both.
+    #[serde(default, deserialize_with = "deserialize_sequence")]
     pub sequence: String,
     #[serde(default)]
     pub bpm: String,
@@ -113,6 +115,10 @@ pub struct RawArrangement {
     pub chord_pro: String,
     #[serde(default)]
     pub lyrics: String,
+    #[serde(default)]
+    pub key_male: String,
+    #[serde(default)]
+    pub key_female: String,
     #[serde(default)]
     pub keys: KeyList,
 }
@@ -126,9 +132,13 @@ pub struct KeyList {
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct RawKey {
     pub id: String,
-    #[serde(default, alias = "starting_key")]
+    #[serde(default)]
+    pub name: String,
+    /// Maps from `key_starting` in the API.
+    #[serde(default, alias = "key_starting")]
     pub starting: String,
-    #[serde(default, alias = "ending_key")]
+    /// Maps from `key_ending` in the API.
+    #[serde(default, alias = "key_ending")]
     pub ending: String,
 }
 
@@ -196,13 +206,13 @@ pub struct RawLocation {
 
 #[derive(Debug, Deserialize)]
 pub struct SongInfoResponse {
-    pub songs: SongInfoInner,
+    #[serde(default)]
+    pub song: Vec<RawSongDetail>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SongInfoInner {
-    #[serde(default)]
-    pub song: Vec<RawSongDetail>,
+pub struct KeysResponse {
+    pub keys: KeyList,
 }
 
 pub fn truthy(v: &serde_json::Value) -> bool {
@@ -258,6 +268,30 @@ where
         serde_json::Value::Bool(b) => Ok(b.to_string()),
         other => Err(de::Error::custom(format!(
             "expected string-compatible scalar, got {other}"
+        ))),
+    }
+}
+
+fn deserialize_sequence<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::String(s) => Ok(s),
+        serde_json::Value::Array(arr) => {
+            let parts: Vec<String> = arr
+                .into_iter()
+                .filter_map(|v| match v {
+                    serde_json::Value::String(s) => Some(s),
+                    _ => None,
+                })
+                .collect();
+            Ok(parts.join(" "))
+        }
+        serde_json::Value::Null => Ok(String::new()),
+        other => Err(de::Error::custom(format!(
+            "expected string or array of strings for sequence, got {other}"
         ))),
     }
 }

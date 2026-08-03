@@ -7,12 +7,12 @@ use wiremock::{Mock, ResponseTemplate};
 fn song_with_arrangements(arrs: Vec<serde_json::Value>) -> serde_json::Value {
     serde_json::json!({
         "status": "ok",
-        "songs": { "song": [ {
+        "song": [ {
             "id": "s1",
             "title": "Title",
             "status": "1",
             "arrangements": { "arrangement": arrs }
-        } ] }
+        } ]
     })
 }
 

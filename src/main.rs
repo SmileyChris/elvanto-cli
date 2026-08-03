@@ -97,6 +97,8 @@ async fn run(cli: Cli) -> Result<(), CliError> {
             cli::SongsCommand::Show(args) => commands::songs_show::run(&client, args).await,
             cli::SongsCommand::Chart(args) => commands::songs_chart::run(&client, args).await,
             cli::SongsCommand::Lyrics(args) => commands::songs_lyrics::run(&client, args).await,
+            cli::SongsCommand::Export => commands::songs_export::run(&client).await,
+            cli::SongsCommand::ArrangementEdit(args) => commands::songs_arrangement_edit::run(&client, args).await,
         },
     }
 }

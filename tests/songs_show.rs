@@ -44,7 +44,7 @@ fn song_body(extra: serde_json::Value) -> serde_json::Value {
     }
     serde_json::json!({
         "status": "ok",
-        "songs": { "song": [ song ] }
+        "song": [ song ]
     })
 }
 
@@ -163,7 +163,7 @@ async fn not_found_returns_exit_1() {
         .and(path("/songs/getInfo.json"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "status": "ok",
-            "songs": { "song": [] }
+            "song": []
         })))
         .mount(&server)
         .await;

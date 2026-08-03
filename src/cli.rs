@@ -80,6 +80,24 @@ pub enum SongsCommand {
     Chart(SongsChartArgs),
     /// Print the lyrics for a song's default arrangement.
     Lyrics(SongsLyricsArgs),
+    /// Export all songs with arrangement keys as NDJSON.
+    Export,
+    /// Edit an arrangement's key settings.
+    ArrangementEdit(ArrangementEditArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ArrangementEditArgs {
+    /// The arrangement ID to edit.
+    pub id: String,
+    /// The arrangement name (required by the API).
+    pub name: String,
+    /// Set the male key (e.g. C, F#, Bb).
+    #[arg(long, value_name = "KEY")]
+    pub key_male: Option<String>,
+    /// Set the female key (e.g. C, F#, Bb).
+    #[arg(long, value_name = "KEY")]
+    pub key_female: Option<String>,
 }
 
 #[derive(Debug, Args)]

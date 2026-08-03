@@ -7,7 +7,7 @@ use wiremock::{Mock, ResponseTemplate};
 fn song_with_chart(name: &str, chord_chart: &str, starting_key: &str) -> serde_json::Value {
     serde_json::json!({
         "status": "ok",
-        "songs": { "song": [ {
+        "song": [ {
             "id": "s1",
             "title": "T",
             "status": "1",
@@ -17,14 +17,14 @@ fn song_with_chart(name: &str, chord_chart: &str, starting_key: &str) -> serde_j
                 "chord_pro": chord_chart,
                 "keys": { "key": [ { "id": "k1", "starting": starting_key, "ending": "" } ] }
             } ] }
-        } ] }
+        } ]
     })
 }
 
 fn song_with_chart_without_keys(name: &str, chord_chart: &str) -> serde_json::Value {
     serde_json::json!({
         "status": "ok",
-        "songs": { "song": [ {
+        "song": [ {
             "id": "s1",
             "title": "T",
             "status": "1",
@@ -34,7 +34,7 @@ fn song_with_chart_without_keys(name: &str, chord_chart: &str) -> serde_json::Va
                 "chord_pro": chord_chart,
                 "keys": { "key": [] }
             } ] }
-        } ] }
+        } ]
     })
 }
 

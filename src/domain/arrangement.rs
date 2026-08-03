@@ -30,6 +30,8 @@ pub struct Arrangement {
     pub sequence: Option<String>,
     pub bpm: Option<String>,
     pub duration: Option<String>,
+    pub key_male: Option<String>,
+    pub key_female: Option<String>,
     pub keys: Vec<Key>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lyrics: Option<String>,
@@ -45,6 +47,8 @@ impl From<RawArrangement> for Arrangement {
             sequence: crate::domain::none_if_empty(raw.sequence),
             bpm: crate::domain::none_if_empty(raw.bpm),
             duration: crate::domain::none_if_empty(raw.duration),
+            key_male: crate::domain::none_if_empty(raw.key_male),
+            key_female: crate::domain::none_if_empty(raw.key_female),
             keys: raw.keys.key.into_iter().map(Into::into).collect(),
             lyrics: crate::domain::none_if_empty(raw.lyrics),
             chord_chart: crate::domain::none_if_empty(raw.chord_pro),
@@ -61,6 +65,7 @@ mod tests {
     fn empty_ending_key_becomes_none() {
         let raw = RawKey {
             id: "k1".into(),
+            name: String::new(),
             starting: "G".into(),
             ending: String::new(),
         };
