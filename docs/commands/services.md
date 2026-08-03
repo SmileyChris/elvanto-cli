@@ -161,6 +161,7 @@ Songs sung ≤ 2 times in the last 12 months:
 | `--to <YYYY-MM-DD>` | Inclusive end date. Defaults to today. |
 | `--max-uses <N>` | Only show songs used ≤ N times (default: 2). |
 | `--json` | Emit all song usage as JSON (ignores `--max-uses` / `--one-leader`). |
+| `--one-leader` | Also show songs used more than N times if always led by the same person. |
 
 ### Examples
 
@@ -173,4 +174,7 @@ elvanto services song-usage --json
 
 # Songs used ≤ 3 times since the start of 2026
 elvanto services song-usage --from 2026-01-01 --max-uses 3
+
+# Also include songs dominated by one leader
+elvanto services song-usage --one-leader
 ```
