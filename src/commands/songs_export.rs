@@ -50,13 +50,25 @@ pub async fn run(client: &Client) -> Result<(), CliError> {
         for arr in &arrangements {
             let mut key_male = arr.key_male.clone();
             let mut key_female = arr.key_female.clone();
+            let mut male_added = String::new();
+            let mut female_added = String::new();
             let mut all_starting: Vec<String> = arr.keys.iter().map(|k| k.starting.clone()).collect();
 
             if let Ok(keys) = client.list_arrangement_keys(&arr.id).await {
+                // keys/getAll order is not date-based; when duplicates exist
+                // (keys/create appends rather than replaces), the newest
+                // record is the authoritative one. date_added is
+                // "YYYY-MM-DD HH:MM:SS", so string comparison works.
                 for k in &keys {
                     match k.name.as_str() {
-                        "Male" => key_male = Some(k.starting.clone()),
-                        "Female" => key_female = Some(k.starting.clone()),
+                        "Male" if k.date_added > male_added => {
+                            male_added = k.date_added.clone();
+                            key_male = Some(k.starting.clone());
+                        }
+                        "Female" if k.date_added > female_added => {
+                            female_added = k.date_added.clone();
+                            key_female = Some(k.starting.clone());
+                        }
                         _ => {}
                     }
                     if !all_starting.contains(&k.starting) {

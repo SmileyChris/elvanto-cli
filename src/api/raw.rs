@@ -140,6 +140,10 @@ pub struct RawKey {
     /// Maps from `key_ending` in the API.
     #[serde(default, alias = "key_ending")]
     pub ending: String,
+    /// When the record was created — used to pick the newest Male/Female
+    /// record when duplicates exist (keys/getAll order is not date-based).
+    #[serde(default)]
+    pub date_added: String,
 }
 
 #[allow(dead_code)]

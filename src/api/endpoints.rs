@@ -106,6 +106,45 @@ impl Client {
         self.post("songs/keys/create", &body).await
     }
 
+    pub async fn edit_arrangement_key(
+        &self,
+        key_id: &str,
+        key_starting: &str,
+    ) -> Result<serde_json::Value, CliError> {
+        let body = serde_json::json!({
+            "id": key_id,
+            "key_starting": key_starting,
+        });
+        self.post("songs/keys/edit", &body).await
+    }
+
+    /// Set an arrangement's key record (Male/Female) to `key_starting`,
+    /// editing every existing record of that name and creating one if absent.
+    ///
+    /// Elvanto has no key-delete endpoint; `songs/keys/create` appends a new
+    /// record every time, so in-place edits keep the data from duplicating.
+    pub async fn set_arrangement_key(
+        &self,
+        arrangement_id: &str,
+        name: &str,
+        key_starting: &str,
+    ) -> Result<(), CliError> {
+        let keys = self.list_arrangement_keys(arrangement_id).await?;
+        let matching: Vec<_> = keys
+            .iter()
+            .filter(|k| k.name.eq_ignore_ascii_case(name))
+            .map(|k| k.id.clone())
+            .collect();
+        if matching.is_empty() {
+            self.create_arrangement_key(arrangement_id, name, key_starting).await?;
+        } else {
+            for id in &matching {
+                self.edit_arrangement_key(id, key_starting).await?;
+            }
+        }
+        Ok(())
+    }
+
     pub async fn list_arrangement_keys(
         &self,
         arrangement_id: &str,

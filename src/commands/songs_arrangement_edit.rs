@@ -9,19 +9,16 @@ pub async fn run(client: &Client, args: ArrangementEditArgs) -> Result<(), CliEr
         ));
     }
 
-    // Create a key entry for male key
+    // Update (or create) the Male key record — keys/create appends duplicates,
+    // so edit existing records in place when present.
     if let Some(km) = &args.key_male {
-        client
-            .create_arrangement_key(&args.id, "Male", km)
-            .await?;
+        client.set_arrangement_key(&args.id, "Male", km).await?;
         eprintln!("Set key_male={km} for arrangement {}", args.id);
     }
 
-    // Create a key entry for female key
+    // Update (or create) the Female key record.
     if let Some(kf) = &args.key_female {
-        client
-            .create_arrangement_key(&args.id, "Female", kf)
-            .await?;
+        client.set_arrangement_key(&args.id, "Female", kf).await?;
         eprintln!("Set key_female={kf} for arrangement {}", args.id);
     }
 
